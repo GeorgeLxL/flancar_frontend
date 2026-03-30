@@ -1,8 +1,8 @@
-﻿import axios from 'axios';
+﻿import { login } from '../api/client';
 
 export default function Login() {
   const handleLogin = async () => {
-    const { data } = await axios.get('http://localhost:8000/auth/login', { withCredentials: true });
+    const { data } = await login();
     window.location.href = data.url;
   };
 

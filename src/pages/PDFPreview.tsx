@@ -5,7 +5,7 @@ import markImage from '../assets/mark.jpg';
 
 Font.register({
   family: 'NotoSansJP',
-  src: 'http://localhost:3000/fonts/NotoSansJP-Regular.ttf',
+  src: window.origin + '/fonts/NotoSansJP-Regular.ttf',
 });
 
 const PDF_TYPES = {

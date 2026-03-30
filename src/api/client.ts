@@ -5,6 +5,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
+
+export const login = () => api.get('/auth/login').then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const logout = () => api.post('/auth/logout');
 
