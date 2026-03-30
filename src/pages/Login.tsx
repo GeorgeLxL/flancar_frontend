@@ -3,6 +3,7 @@
 export default function Login() {
   const handleLogin = async () => {
     const { data } = await login();
+    console.log(data);
     window.location.href = data.url;
   };
 
