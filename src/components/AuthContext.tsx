@@ -1,8 +1,6 @@
 ﻿import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getMe } from '../api/client';
 
-const MOCK_USER_KEY = 'flancar-mock-user';
-
 export interface User {
   sub: string;
   email: string;
@@ -20,18 +18,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, refetch: () => {} });
 
-function getMockUser(): User | null {
-  const raw = window.localStorage.getItem(MOCK_USER_KEY);
-
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw) as User;
-  } catch {
-    window.localStorage.removeItem(MOCK_USER_KEY);
-    return null;
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -41,7 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     getMe()
       .then(setUser)
-      .catch(() => setUser(getMockUser()))
       .finally(() => setLoading(false));
   };
 

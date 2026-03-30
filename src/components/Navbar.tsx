@@ -2,13 +2,10 @@
 import { useAuth } from './AuthContext';
 import { logout } from '../api/client';
 
-const MOCK_USER_KEY = 'flancar-mock-user';
-
 export default function Navbar() {
   const { user, refetch } = useAuth();
 
   const handleLogout = async () => {
-    window.localStorage.removeItem(MOCK_USER_KEY);
     await logout().catch(() => undefined);
     refetch();
   };

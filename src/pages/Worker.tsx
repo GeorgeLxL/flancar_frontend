@@ -5,8 +5,6 @@ import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 import { deleteSchedule, getSchedules } from '../api/client';
 
-const MOCK_USER_KEY = 'flancar-mock-user';
-
 type ScheduleStatus = 'draft' | 'pending' | 'sent' | 'finished';
 
 interface Schedule {
@@ -27,51 +25,10 @@ const STATUS_LABEL: Record<ScheduleStatus, { label: string; className: string }>
   finished: { label: '完了', className: 'bg-green-100 text-green-700' },
 };
 
-const MOCK_SCHEDULES: Schedule[] = [
-  {
-    id: 101,
-    pdfNumber: '20260330011',
-    title: 'オイル交換 見積作成',
-    carType: 'トヨタ アクア',
-    customerName: '佐藤 太郎',
-    startAt: '2026-03-30T09:00:00',
-    endAt: '2026-03-30T10:00:00',
-    status: 'draft',
-  },
-  {
-    id: 102,
-    pdfNumber: '20260330012',
-    title: 'タイヤ交換 請求送付待ち',
-    carType: 'ホンダ フィット',
-    customerName: '鈴木 花子',
-    startAt: '2026-03-30T11:00:00',
-    endAt: '2026-03-30T12:30:00',
-    status: 'pending',
-  },
-  {
-    id: 103,
-    pdfNumber: '20260330013',
-    title: '12ヶ月点検 完了分',
-    carType: '日産 ノート',
-    customerName: '高橋 一郎',
-    startAt: '2026-03-30T13:30:00',
-    endAt: '2026-03-30T16:30:00',
-    status: 'finished',
-  },
-];
-
 export default function Worker() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
 
   const load = () => {
-    const raw = window.localStorage.getItem(MOCK_USER_KEY);
-    const isMockWorker = raw ? JSON.parse(raw)?.role === 'worker' : false;
-
-    if (isMockWorker) {
-      setSchedules(MOCK_SCHEDULES);
-      return Promise.resolve();
-    }
-
     return getSchedules().then(setSchedules);
   };
 
@@ -94,16 +51,7 @@ export default function Worker() {
 
     if (!result.isConfirmed) return;
 
-    const raw = window.localStorage.getItem(MOCK_USER_KEY);
-    const isMockWorker = raw ? JSON.parse(raw)?.role === 'worker' : false;
-
     try {
-      if (isMockWorker) {
-        setSchedules(current => current.filter(schedule => schedule.id !== id));
-        toast.success('スケジュールを削除しました。');
-        return;
-      }
-
       await deleteSchedule(id);
       await load();
       toast.success('スケジュールを削除しました。');
