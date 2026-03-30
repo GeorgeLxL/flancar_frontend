@@ -1,5 +1,6 @@
 ﻿import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getMe } from '../api/client';
+import { error } from 'console';
 
 export interface User {
   sub: string;
@@ -30,6 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(r => {
         setUser(r);
         localStorage.setItem('user', JSON.stringify(r));
+      })
+      .catch((error) => {
+        if (error.response?.status === 401) {
+          setUser(null);
+          localStorage.removeItem('user');
+        } else {
+          console.error('ユーザー情報の取得に失敗:', error);
+        }
       })
       .finally(() => setLoading(false));
   };
