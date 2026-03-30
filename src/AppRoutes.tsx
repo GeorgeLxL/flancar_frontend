@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './components/AuthContext';
 import Navbar from './components/Navbar';
@@ -9,7 +9,11 @@ import ScheduleForm from './pages/ScheduleForm';
 import PDF from './pages/PDF';
 
 function RequireRole({ roles, children }: { roles: string[]; children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+
+  useEffect(() => {
+    setUser(JSON.parse(localStorage.getItem('user') || 'null'));
+  }, [location]);
 
   if (roles && !roles.includes(user?.role || '')) {
     return <Navigate to="/login" />;
@@ -19,7 +23,11 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
 }
 
 export default function AppRoutes() {
-  const { loading, user } = useAuth();
+  const { loading, user, setUser } = useAuth();
+  
+  useEffect(() => {
+    setUser(JSON.parse(localStorage.getItem('user') || 'null'));
+  }, [location]);
 
   if (loading) {
     return <div className="p-6 text-center">読み込み中...</div>;

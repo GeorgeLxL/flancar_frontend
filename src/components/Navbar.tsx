@@ -7,6 +7,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout().catch(() => undefined);
+    localStorage.removeItem('user');
     refetch();
   };
 
