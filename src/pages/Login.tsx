@@ -2,9 +2,8 @@
 
 export default function Login() {
   const handleLogin = async () => {
-    const { data } = await login();
-    console.log(data);
-    window.location.href = data.url;
+    const { url } = await login();
+    window.location.href = url;
   };
 
   return (
