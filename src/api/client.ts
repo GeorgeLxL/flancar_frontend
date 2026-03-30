@@ -1,10 +1,14 @@
 import axios from 'axios';
 
+console.log(import.meta.env.VITE_BACKEND_ENDPOINT);
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_ENDPOINT,
   withCredentials: true,
 });
 
+
+export const login = () => api.get('/auth/login').then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const logout = () => api.post('/auth/logout');
 
