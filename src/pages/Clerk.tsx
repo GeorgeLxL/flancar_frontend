@@ -5,8 +5,6 @@ import toast from 'react-hot-toast';
 import { getSchedules, getSchedule, updateScheduleStatus } from '../api/client';
 import PDFPreview, { type Schedule as PreviewSchedule } from './PDFPreview';
 
-const MOCK_USER_KEY = 'flancar-mock-user';
-
 type ScheduleStatus = 'draft' | 'pending' | 'sent' | 'finished';
 
 type ScheduleRow = {
@@ -32,55 +30,11 @@ const STATUS_LABEL: Record<ScheduleStatus, { label: string; className: string }>
   finished: { label: '完了', className: 'bg-green-100 text-green-700' },
 };
 
-const MOCK_SCHEDULES: ScheduleRow[] = [
-  {
-    id: 8323218,
-    pdfNumber: '20260330001',
-    title: '2026年3月分 納品請求書',
-    carType: 'トヨタ プリウス ZVW30',
-    customerName: 'TN墨田菊川',
-    startAt: '2026-03-30T09:30:00',
-    endAt: '2026-03-30T17:00:00',
-    status: 'draft',
-  },
-];
-
-const MOCK_PREVIEW_SCHEDULE: PreviewScheduleWithMeta = {
-  id: 8323218,
-  status: 'draft',
-  pdfNumber: '20260330001',
-  title: '2026年3月分 納品請求書',
-  carType: 'トヨタ プリウス ZVW30',
-  description: '3月実施分の整備・部品交換費用をまとめた納品請求書サンプルです。',
-  startAt: '2026-03-30T09:30:00',
-  endAt: '2026-03-30T17:00:00',
-  storeName: '墨田菊川店',
-  assignee: '山田 一郎',
-  responsible: '田中 部長',
-  customerName: 'TN墨田菊川',
-  requester: '寺西 様',
-  items: [
-    { productName: '12ヶ月点検 基本整備', quantity: 1, unitPrice: 12800 },
-    { productName: 'エンジンオイル SP 0W-20', quantity: 4, unitPrice: 2200 },
-    { productName: 'オイルフィルター取替', quantity: 1, unitPrice: 1800 },
-    { productName: 'フロントワイパーゴム 左右', quantity: 2, unitPrice: 1400 },
-    { productName: '発煙筒交換', quantity: 1, unitPrice: 980 },
-    { productName: '納車・請求書発行手数料', quantity: 1, unitPrice: 1200 },
-  ],
-};
-
 export default function Clerk() {
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
   const [selected, setSelected] = useState<PreviewScheduleWithMeta | null>(null);
 
   useEffect(() => {
-    const hasMockUser = Boolean(window.localStorage.getItem(MOCK_USER_KEY));
-
-    if (hasMockUser) {
-      setSchedules(MOCK_SCHEDULES);
-      return;
-    }
-
     getSchedules().then(setSchedules).catch(() => setSchedules([]));
   }, []);
 
@@ -93,16 +47,8 @@ export default function Clerk() {
     if (!selected) return;
 
     const nextStatus: ScheduleStatus = 'pending';
-    const hasMockUser = Boolean(window.localStorage.getItem(MOCK_USER_KEY));
 
     try {
-      if (hasMockUser) {
-        syncLocalStatus(selected.id, nextStatus);
-        toast.success('PDFを送信しました。');
-        setSelected(null);
-        return;
-      }
-
       const updated = await updateScheduleStatus(selected.id, nextStatus);
       syncLocalStatus(selected.id, updated.status);
       toast.success(updated.status === 'pending' ? 'PDFを送信しました。' : 'ステータスを更新しました。');
@@ -127,14 +73,7 @@ export default function Clerk() {
 
     if (!result.isConfirmed) return;
 
-    const hasMockUser = Boolean(window.localStorage.getItem(MOCK_USER_KEY));
-
     try {
-      if (hasMockUser) {
-        syncLocalStatus(id, 'finished');
-        toast.success('スケジュールを完了にしました。');
-        return;
-      }
 
       const updated = await updateScheduleStatus(id, 'finished');
       syncLocalStatus(id, updated.status);
@@ -148,13 +87,6 @@ export default function Clerk() {
   };
 
   const openPDF = (schedule: ScheduleRow) => {
-    const hasMockUser = Boolean(window.localStorage.getItem(MOCK_USER_KEY));
-
-    if (hasMockUser && schedule.id === MOCK_SCHEDULES[0].id) {
-      setSelected({ ...MOCK_PREVIEW_SCHEDULE, status: schedule.status });
-      return;
-    }
-
     getSchedule(schedule.id)
       .then((data: PreviewScheduleWithMeta) => setSelected(data))
       .catch(() => setSelected(null));
