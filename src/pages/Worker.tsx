@@ -40,7 +40,7 @@ export default function Worker() {
     const result = await Swal.fire({
       title: 'このスケジュールを削除しますか？',
       text: '削除すると元に戻せません。',
-      icon: 'warning',
+      icon: 'question',
       showCancelButton: true,
       confirmButtonText: '削除する',
       cancelButtonText: 'キャンセル',
