@@ -1,6 +1,5 @@
 ﻿import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getMe } from '../api/client';
-import { error } from 'console';
 
 export interface User {
   sub: string;
