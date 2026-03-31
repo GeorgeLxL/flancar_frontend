@@ -3,7 +3,7 @@ import { login } from '../api/client';
 import toast from 'react-hot-toast';
 
 export default function Login() {
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -14,8 +14,8 @@ export default function Login() {
         toast.error('ユーザーが見つかりません');
       } else if (error === 'auth_failed') {
         toast.error('認証に失敗しました');
-      } else if (error === 'no_name') {
-        toast.error('名前が指定されていません');
+      } else if (error === 'no_email') {
+        toast.error('メールアドレスが指定されていません');
       }
       // Clear the error from URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -24,10 +24,10 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!email.trim()) return;
     setLoading(true);
     try {
-      const { url } = await login(name.trim());
+      const { url } = await login(email.trim());
       window.location.href = url;
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'ログインに失敗しました');
@@ -41,14 +41,14 @@ export default function Login() {
         <div className="space-y-2">
           <div className="mb-4 text-4xl">FlanCar</div>
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">FlanCar</h1>
-          <p className="text-sm text-gray-400">名前を入力してログインしてください</p>
+          <p className="text-sm text-gray-400">メールアドレスを入力してログインしてください</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="名前"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="メールアドレス"
             required
             className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-gray-900 focus:outline-none"
           />
