@@ -1,9 +1,38 @@
-﻿import { login } from '../api/client';
+﻿import { useState, useEffect } from 'react';
+import { login } from '../api/client';
+import toast from 'react-hot-toast';
 
 export default function Login() {
-  const handleLogin = async () => {
-    const { url } = await login();
-    window.location.href = url;
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    if (error) {
+      if (error === 'user_not_found') {
+        toast.error('ユーザーが見つかりません');
+      } else if (error === 'auth_failed') {
+        toast.error('認証に失敗しました');
+      } else if (error === 'no_name') {
+        toast.error('名前が指定されていません');
+      }
+      // Clear the error from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      const { url } = await login(name.trim());
+      window.location.href = url;
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'ログインに失敗しました');
+      setLoading(false);
+    }
   };
 
   return (
@@ -12,14 +41,25 @@ export default function Login() {
         <div className="space-y-2">
           <div className="mb-4 text-4xl">FlanCar</div>
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">FlanCar</h1>
-          <p className="text-sm text-gray-400">Smaregiアカウントでログインしてください</p>
+          <p className="text-sm text-gray-400">名前を入力してログインしてください</p>
         </div>
-        <button
-          onClick={() => handleLogin()}
-          className="w-full rounded-xl bg-gray-900 px-8 py-3 font-medium text-white transition-all duration-200 hover:bg-gray-700"
-        >
-          Smaregiでログイン
-        </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="名前"
+            required
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-gray-900 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-gray-900 px-8 py-3 font-medium text-white transition-all duration-200 hover:bg-gray-700 disabled:opacity-50"
+          >
+            {loading ? 'ログイン中...' : 'ログイン'}
+          </button>
+        </form>
       </div>
     </div>
   );
