@@ -69,7 +69,7 @@ export default function Worker() {
             <p className="mt-0.5 text-sm text-gray-400">{schedules.length}件</p>
           </div>
           <Link
-            to="/schedules/new"
+            to="/worker/new"
             className="inline-flex items-center rounded-xl bg-gray-900 px-5 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-gray-700"
           >
             ＋ 新規作成
@@ -115,7 +115,7 @@ export default function Worker() {
                     {schedule.status === 'draft' ? (
                       <div className="flex gap-2">
                         <Link
-                          to={`/schedules/${schedule.id}/edit`}
+                          to={`/worker/${schedule.id}/edit`}
                           className="inline-flex items-center rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-100"
                         >
                           編集

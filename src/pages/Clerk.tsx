@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 import { getSchedules, getSchedule, updateScheduleStatus } from '../api/client';
-import PDFPreview, { type Schedule as PreviewSchedule } from './PDFPreview';
+import PDFPreview, { type Schedule as PreviewSchedule } from '../components/PDFPreview';
 
 type ScheduleStatus = 'draft' | 'pending' | 'sent' | 'finished';
 
