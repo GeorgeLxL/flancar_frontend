@@ -17,7 +17,7 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
     if (user) {
       try {
         const parsedUser = JSON.parse(user);
-        if (parsedUser && typeof parsedUser === 'object') {
+        if (parsedUser && parsedUser.staffName && parsedUser.roleId) {
           localStorage.setItem('user', JSON.stringify(parsedUser));
           setUser(parsedUser);
           window.history.replaceState({}, document.title, window.location.pathname);
