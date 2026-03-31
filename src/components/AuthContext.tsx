@@ -7,7 +7,6 @@ export interface User {
   name: string;
   role: string;
   accessToken: string;
-  contractId: string;
 }
 
 interface AuthContextType {
