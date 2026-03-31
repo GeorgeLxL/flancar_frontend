@@ -24,22 +24,6 @@ export default function Login() {
       // Clear the error from URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-    const user = urlParams.get('user');
-
-    if (user) {
-      try {
-        const parsedUser = JSON.parse(user);
-        if (parsedUser && typeof parsedUser === 'object') {
-          localStorage.setItem('user', JSON.stringify(parsedUser));
-          setUser(parsedUser);
-          window.history.replaceState({}, document.title, window.location.pathname);
-          window.location.href = '/';
-          return;
-        }
-      } catch {
-        console.warn('Invalid user data in URL, skipping storage');
-      }
-    }
 
     // fallback: load from localStorage
     try {
