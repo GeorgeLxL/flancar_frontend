@@ -13,7 +13,7 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const user = urlParams.get('user');
-    if (user) {
+    if (user && JSON.parse(user) instanceof Object) {
       localStorage.setItem('user', user);
       setUser(JSON.parse(user));
       window.history.replaceState({}, document.title, window.location.pathname);
