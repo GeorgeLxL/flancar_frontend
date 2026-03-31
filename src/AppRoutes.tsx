@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Worker from './pages/Worker';
 import Clerk from './pages/Clerk';
 import ScheduleForm from './pages/ScheduleForm';
-import PDF from './pages/PDF';
 
 function RequireRole({ roles, children }: { roles: string[]; children: ReactNode }) {
   const { user, setUser } = useAuth();
@@ -73,7 +72,7 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/schedules/new"
+          path="/worker/new"
           element={
             <RequireRole roles={['worker', 'admin']}>
               <ScheduleForm />
@@ -81,18 +80,10 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/schedules/:id/edit"
+          path="/worker/:id/edit"
           element={
             <RequireRole roles={['worker', 'admin']}>
               <ScheduleForm />
-            </RequireRole>
-          }
-        />
-        <Route
-          path="/schedules/:id/pdf"
-          element={
-            <RequireRole roles={['clerk', 'admin']}>
-              <PDF />
             </RequireRole>
           }
         />
