@@ -6,7 +6,7 @@ const api = axios.create({
 });
 
 
-export const login = () => api.get('/auth/login').then(r => r.data);
+export const login = (name: string) => api.post('/auth/login', { name }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const logout = () => api.post('/auth/logout');
 
@@ -20,3 +20,4 @@ export const deleteSchedule = (id: number) => api.delete(`/schedules/${id}`);
 
 export const getProducts = () => api.get('/smaregi/products').then(r => r.data);
 export const getStores = () => api.get('/smaregi/stores').then(r => r.data);
+export const getStaffs = () => api.get('/smaregi/staffs').then(r => r.data);
