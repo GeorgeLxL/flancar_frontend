@@ -1,8 +1,12 @@
 ﻿import { useState, useEffect } from 'react';
 import { login } from '../api/client';
+import { useAuth } from '../components/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function Login() {
+
+  const {setUser} = useAuth();
+
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,6 +23,13 @@ export default function Login() {
       }
       // Clear the error from URL
       window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    const user = urlParams.get('user');
+    if (user) {
+      localStorage.setItem('user', user);
+      setUser(JSON.parse(user));
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.href = '/';
     }
   }, []);
 

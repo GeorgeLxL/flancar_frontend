@@ -20,8 +20,8 @@ export default function Navbar() {
         {user && (
           <div className="flex min-w-0 items-center gap-3 text-sm">
             <div className="min-w-0 text-right text-gray-500">
-              <div className="truncate">{user.name}</div>
-              <span className="mt-1 hidden rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 sm:inline-flex">{user.role}</span>
+              <div className="truncate">{user.staffName}</div>
+              <span className="mt-1 hidden rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 sm:inline-flex">{user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : ''}</span>
             </div>
             <button
               type="button"

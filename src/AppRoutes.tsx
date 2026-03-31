@@ -12,10 +12,18 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
   const { user, setUser } = useAuth();
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const user = urlParams.get('user');
+    if (user) {
+      localStorage.setItem('user', user);
+      setUser(JSON.parse(user));
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.href = '/';
+    }
     setUser(JSON.parse(localStorage.getItem('user') || 'null'));
   }, [location]);
 
-  if (roles && !roles.includes(user?.role || '')) {
+  if (roles && !roles.includes(user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : '')) {
     return <Navigate to="/login" />;
   }
 
@@ -34,12 +42,12 @@ export default function AppRoutes() {
   }
 
   const home =
-    user?.role === 'worker'
+    user?.roleId === '3'
       ? '/worker'
-      : user?.role === 'clerk'
+      : user?.roleId === '2'
         ? '/clerk'
-        : user?.role === 'admin'
-          ? '/clerk'
+        : user?.roleId === '1'
+          ? '/worker'
           : '/login';
 
   return (
