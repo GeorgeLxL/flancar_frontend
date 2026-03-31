@@ -6,7 +6,7 @@ const api = axios.create({
 });
 
 
-export const login = (name: string) => api.post('/auth/login', { name }).then(r => r.data);
+export const login = (email: string) => api.post('/auth/login', { email }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const logout = () => api.post('/auth/logout');
 
