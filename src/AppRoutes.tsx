@@ -13,13 +13,29 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const user = urlParams.get('user');
-    if (user && JSON.parse(user) instanceof Object) {
-      localStorage.setItem('user', user);
-      setUser(JSON.parse(user));
-      window.history.replaceState({}, document.title, window.location.pathname);
-      window.location.href = '/';
+
+    if (user) {
+      try {
+        const parsedUser = JSON.parse(user);
+        if (parsedUser && typeof parsedUser === 'object') {
+          localStorage.setItem('user', JSON.stringify(parsedUser));
+          setUser(parsedUser);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          window.location.href = '/';
+          return;
+        }
+      } catch {
+        console.warn('Invalid user data in URL, skipping storage');
+      }
     }
-    setUser(JSON.parse(localStorage.getItem('user') || 'null'));
+
+    // fallback: load from localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('user') || 'null');
+      setUser(stored);
+    } catch {
+      setUser(null);
+    }
   }, [location]);
 
   if (roles && !roles.includes(user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : '')) {
@@ -31,7 +47,7 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
 
 export default function AppRoutes() {
   const { loading, user, setUser } = useAuth();
-  
+
   useEffect(() => {
     setUser(JSON.parse(localStorage.getItem('user') || 'null'));
   }, [location]);

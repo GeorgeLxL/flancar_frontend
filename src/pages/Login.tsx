@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 export default function Login() {
 
-  const {setUser} = useAuth();
+  const { setUser } = useAuth();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,11 +25,28 @@ export default function Login() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     const user = urlParams.get('user');
+
     if (user) {
-      localStorage.setItem('user', user);
-      setUser(JSON.parse(user));
-      window.history.replaceState({}, document.title, window.location.pathname);
-      window.location.href = '/';
+      try {
+        const parsedUser = JSON.parse(user);
+        if (parsedUser && typeof parsedUser === 'object') {
+          localStorage.setItem('user', JSON.stringify(parsedUser));
+          setUser(parsedUser);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          window.location.href = '/';
+          return;
+        }
+      } catch {
+        console.warn('Invalid user data in URL, skipping storage');
+      }
+    }
+
+    // fallback: load from localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('user') || 'null');
+      setUser(stored);
+    } catch {
+      setUser(null);
     }
   }, []);
 
