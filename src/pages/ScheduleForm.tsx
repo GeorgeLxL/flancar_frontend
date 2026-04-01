@@ -53,8 +53,17 @@ export default function ScheduleForm() {
   }, [id, isEdit, setValue]);
 
   const onSubmit = async (data: ScheduleFormData) => {
-    if (isEdit) await updateSchedule(Number(id), data);
-    else await createSchedule(data);
+    const payload = {
+      ...data,
+      items: data.items.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+      })),
+    };
+
+    if (isEdit) await updateSchedule(Number(id), payload);
+    else await createSchedule(payload);
     navigate('/');
   };
 
