@@ -88,11 +88,20 @@ function eventsForDay(events: CalendarEvent[], day: Date) {
   });
 }
 
-function eventsForSlot(events: CalendarEvent[], day: Date, slot: number) {
+function eventsStartingAtSlot(events: CalendarEvent[], day: Date, slot: number) {
   return events.filter(e => {
     const start = new Date(e.startAt);
     return isSameDay(day, start) && dateToSlot(start) === slot;
   });
+}
+
+function eventSpansSlot(event: CalendarEvent, day: Date, slot: number) {
+  const start = new Date(event.startAt);
+  const end = new Date(event.endAt);
+  if (!isSameDay(day, start) && !isSameDay(day, end) && !(day > start && day < end)) return false;
+  const startSlot = isSameDay(day, start) ? dateToSlot(start) : 0;
+  const endSlot = isSameDay(day, end) ? dateToSlot(end) : 96;
+  return slot > startSlot && slot < endSlot;
 }
 
 function EventPill({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
@@ -226,7 +235,8 @@ function TimeGrid({
 
                 {/* Day slot cells */}
                 {days.map((day, di) => {
-                  const slotEvents = eventsForSlot(events, day, slot);
+                  const startingEvents = eventsStartingAtSlot(events, day, slot);
+                  const spanningEvents = events.filter(e => eventSpansSlot(e, day, slot));
                   const isNow = isToday(day) && nowSlot === slot;
                   const dragging = isDragging(di, slot);
 
@@ -246,8 +256,15 @@ function TimeGrid({
                           className="absolute left-0 right-0 border-t-2 border-red-400 z-10 pointer-events-none"
                         />
                       )}
-                      {slotEvents.map(e => (
+                      {startingEvents.map(e => (
                         <EventPill key={e.id} event={e} onClick={() => onEventClick?.(e)} />
+                      ))}
+                      {spanningEvents.map(e => (
+                        <div
+                          key={e.id}
+                          onClick={ev => { ev.stopPropagation(); onEventClick?.(e); }}
+                          className={`absolute inset-x-px inset-y-0 ${STATUS_COLOR[e.status]} opacity-80 cursor-pointer z-10`}
+                        />
                       ))}
                     </div>
                   );
