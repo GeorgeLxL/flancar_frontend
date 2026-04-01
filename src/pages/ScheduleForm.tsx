@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { scheduleSchema, type ScheduleFormData } from '../schemas/schedule';
-import { createSchedule, getProducts, getSchedule, getStores, updateSchedule } from '../api/client';
+import { createSchedule, getProducts, getSchedule, getStaffs, updateSchedule } from '../api/client';
+import Select from 'react-select';
 
 interface Product {
   productId: string;
@@ -11,20 +12,57 @@ interface Product {
   unitPrice: number;
 }
 
-interface Store {
-  storeId: string;
-  storeName: string;
+interface Staff {
+  staffId: string;
+  staffName: string;
 }
 
 const inputClass = 'w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-gray-200';
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wider text-gray-400';
+
+const selectStyles = {
+  control: (provided: any) => ({
+    ...provided,
+    width: '100%',
+    border: '1px solid #e5e7eb',
+    borderRadius: '0.75rem',
+    backgroundColor: 'white',
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
+    color: '#111827',
+    transition: 'all',
+    boxShadow: 'none',
+    '&:hover': {
+      borderColor: '#e5e7eb',
+    },
+    '&:focus-within': {
+      outline: 'none',
+      borderColor: '#e5e7eb',
+      boxShadow: '0 0 0 2px rgba(229, 231, 235, 0.5)',
+    },
+  }),
+  option: (provided: any, state: any) => ({
+    ...provided,
+    backgroundColor: state.isSelected ? '#f3f4f6' : state.isFocused ? '#f9fafb' : 'white',
+    color: '#111827',
+    fontSize: '0.875rem',
+  }),
+  singleValue: (provided: any) => ({
+    ...provided,
+    color: '#111827',
+  }),
+  placeholder: (provided: any) => ({
+    ...provided,
+    color: '#9ca3af',
+  }),
+};
 
 export default function ScheduleForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const [products, setProducts] = useState<Product[]>([]);
-  const [stores, setStores] = useState<Store[]>([]);
+  const [staffs, setStaffs] = useState<Staff[]>([]);
 
   const {
     register,
@@ -43,18 +81,26 @@ export default function ScheduleForm() {
 
   useEffect(() => {
     getProducts().then(setProducts).catch(() => setProducts([]));
-    getStores().then(setStores).catch(() => setStores([]));
+    getStaffs().then(setStaffs).catch(() => setStaffs([]));
 
     if (isEdit) {
       getSchedule(Number(id)).then((schedule: any) => {
         Object.keys(schedule).forEach(key => setValue(key as keyof ScheduleFormData, schedule[key]));
+        if (schedule?.staffId) {
+          setValue('staffId', schedule.staffId);
+          setValue('staffName', schedule.staffName);
+        }
       });
     }
   }, [id, isEdit, setValue]);
 
   const onSubmit = async (data: ScheduleFormData) => {
+    const { staffId, staffName, ...rest } = data;
+
     const payload = {
-      ...data,
+      ...rest,
+      staffId,
+      staffName,
       items: data.items.map(item => ({
         productId: item.productId,
         productName: item.productName,
@@ -104,24 +150,20 @@ export default function ScheduleForm() {
           </div>
 
           <div>
-            <label className={labelClass}>店舗</label>
-            <select
-              {...register('storeId')}
-              onChange={event => {
-                const store = stores.find(item => item.storeId === event.target.value);
-                setValue('storeId', event.target.value);
-                setValue('storeName', store?.storeName ?? '');
+            <label className={labelClass}>スタッフ</label>
+            <Select
+              options={staffs.map(staff => ({ value: staff.staffId, label: staff.staffName }))}
+              value={staffs.find(s => s.staffId === watch('staffId')) ? { value: watch('staffId'), label: staffs.find(s => s.staffId === watch('staffId'))?.staffName } : null}
+              onChange={(selected) => {
+                setValue('staffId', selected?.value || '');
+                setValue('staffName', selected?.label || '');
               }}
-              className={inputClass}
-            >
-              <option value="">選択してください</option>
-              {stores.map(store => (
-                <option key={store.storeId} value={store.storeId}>
-                  {store.storeName}
-                </option>
-              ))}
-            </select>
-            {errors.storeId && <p className="mt-1 text-xs text-red-400">{errors.storeId.message}</p>}
+              placeholder="選択してください"
+              styles={selectStyles}
+              isSearchable={true}
+            />
+            {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
+            <input type="hidden" {...register('staffName')} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
@@ -157,23 +199,20 @@ export default function ScheduleForm() {
                 return (
                   <div key={fieldItem.id} className="rounded-xl bg-gray-50 p-3">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-2">
-                      <select
-                        {...register(`items.${index}.productId`)}
-                        onChange={event => {
-                          const product = products.find(item => item.productId === event.target.value);
-                          setValue(`items.${index}.productId`, event.target.value);
-                          setValue(`items.${index}.productName`, product?.productName ?? '');
-                          setValue(`items.${index}.unitPrice`, product?.unitPrice ?? 0);
+                      <Select
+                        options={products.map(product => ({ value: product.productId, label: `${product.productName} (${product.unitPrice.toLocaleString()}円)` }))}
+                        value={products.find(p => p.productId === currentItem?.productId) ? { value: currentItem.productId, label: `${products.find(p => p.productId === currentItem.productId)?.productName} (${products.find(p => p.productId === currentItem.productId)?.unitPrice.toLocaleString()}円)` } : null}
+                        onChange={(selected) => {
+                          const product = products.find(p => p.productId === selected?.value);
+                          setValue(`items.${index}.productId`, selected?.value || '');
+                          setValue(`items.${index}.productName`, product?.productName || '');
+                          setValue(`items.${index}.unitPrice`, product?.unitPrice || 0);
                         }}
-                        className="w-full md:flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
-                      >
-                        <option value="">商品を選択</option>
-                        {products.map(product => (
-                          <option key={product.productId} value={product.productId}>
-                            {product.productName} ({product.unitPrice.toLocaleString()}円)
-                          </option>
-                        ))}
-                      </select>
+                        placeholder="商品を選択"
+                        styles={selectStyles}
+                        isSearchable={true}
+                        className="w-full md:flex-1"
+                      />
                       <input type="hidden" {...register(`items.${index}.productName`)} />
                       <input type="hidden" {...register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:flex md:items-center md:gap-2">

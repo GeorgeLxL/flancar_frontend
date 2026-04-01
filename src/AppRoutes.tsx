@@ -36,7 +36,7 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
     } catch {
       setUser(null);
     }
-  }, [location]);
+  }, [setUser]);
 
   if (roles && !roles.includes(user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : '')) {
     return <Navigate to="/login" />;
@@ -50,7 +50,7 @@ export default function AppRoutes() {
 
   useEffect(() => {
     setUser(JSON.parse(localStorage.getItem('user') || 'null'));
-  }, [location]);
+  }, [setUser]);
 
   if (loading) {
     return <div className="p-6 text-center">読み込み中...</div>;
