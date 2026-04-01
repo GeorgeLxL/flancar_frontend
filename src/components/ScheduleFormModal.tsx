@@ -173,8 +173,15 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
   }, [scheduleId, isEdit, setValue]);
 
   const onSubmit = async (data: ScheduleFormData) => {
+    // Convert local datetime strings to ISO with timezone so Postgres stores correctly
+    const toISO = (local: string) => {
+      const d = new Date(local);
+      return d.toISOString();
+    };
     const payload = {
       ...data,
+      startAt: toISO(data.startAt),
+      endAt: toISO(data.endAt),
       items: data.items.map(item => ({
         productId: item.productId,
         productName: item.productName,
