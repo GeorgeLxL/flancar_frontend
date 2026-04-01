@@ -11,6 +11,8 @@ export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const logout = () => api.post('/auth/logout');
 
 export const getSchedules = () => api.get('/schedules').then(r => r.data);
+export const getSchedulesByRange = (from: Date, to: Date) =>
+  api.get('/schedules/range', { params: { from: from.toISOString(), to: to.toISOString() } }).then(r => r.data);
 export const getSchedule = (id: number) => api.get(`/schedules/${id}`).then(r => r.data);
 export const createSchedule = (data: unknown) => api.post('/schedules', data).then(r => r.data);
 export const updateSchedule = (id: number, data: unknown) => api.put(`/schedules/${id}`, data).then(r => r.data);

@@ -1,24 +1,26 @@
 import { z } from 'zod';
 
+const req = z.string({ error: '必須項目です' }).min(1, '必須項目です');
+
 export const scheduleItemSchema = z.object({
-  productId: z.string().min(1),
-  productName: z.string().min(1),
+  productId: req,
+  productName: req,
   unitPrice: z.number().nonnegative(),
   quantity: z.number().int().positive(),
 });
 
 export const scheduleSchema = z.object({
-  title: z.string().min(1, '必須項目です'),
-  carType: z.string().min(1, '必須項目です'),
+  title: req,
+  carType: req,
   description: z.string().optional(),
-  startAt: z.string().min(1, '必須項目です'),
-  endAt: z.string().min(1, '必須項目です'),
-  staffId: z.string().min(1, '必須項目です'),
-  staffName: z.string().min(1),
-  assignee: z.string().min(1, '必須項目です'),
-  responsible: z.string().min(1, '必須項目です'),
-  customerName: z.string().min(1, '必須項目です'),
-  requester: z.string().min(1, '必須項目です'),
+  startAt: req,
+  endAt: req,
+  staffId: req,
+  staffName: req,
+  assignee: req,
+  responsible: req,
+  customerName: req,
+  requester: req,
   items: z.array(scheduleItemSchema).min(1, '商品を1つ以上選択してください'),
 });
 
