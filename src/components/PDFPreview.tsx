@@ -289,7 +289,8 @@ export interface Schedule {
   description?: string;
   startAt: string;
   endAt: string;
-  storeName: string;
+  staffName: string;
+  storeName?: string;
   assignee: string;
   responsible: string;
   customerName: string;
@@ -334,7 +335,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
 
         <View style={styles.recipientLine}>
           <Text style={styles.recipientText}>{schedule.customerName}</Text>
-          <Text style={styles.shopText}>{schedule.storeName}</Text>
+          <Text style={styles.shopText}>{schedule.staffName ?? schedule.storeName}</Text>
         </View>
 
         <View style={styles.upperArea}>
