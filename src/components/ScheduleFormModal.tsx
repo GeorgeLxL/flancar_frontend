@@ -262,29 +262,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             </div>
 
             <div>
-              <label className={labelClass}>内容</label>
-              <textarea
-                {...register('description')}
-                rows={2}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>開始日時</label>
-                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} />
-                {errors.startAt && <p className="mt-1 text-xs text-red-400">{errors.startAt.message}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>終了日時</label>
-                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} />
-                {errors.endAt && <p className="mt-1 text-xs text-red-400">{errors.endAt.message}</p>}
-              </div>
-            </div>
-
-            <div>
-              <label className={labelClass}>スタッフ</label>
+              <label className={labelClass}>会員</label>
               <Select
                 options={staffs.map(s => ({ value: s.staffId, label: s.staffName }))}
                 value={
@@ -302,16 +280,6 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               />
               {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
               <input type="hidden" {...register('staffName')} />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {field('担当者', 'assignee')}
-              {field('責任者', 'responsible')}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {field('お客様名', 'customerName')}
-              {field('ご依頼者', 'requester')}
             </div>
 
             {/* Items */}
@@ -382,6 +350,38 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                   );
                 })}
               </div>
+            </div>
+
+            <div>
+              <label className={labelClass}>内容</label>
+              <textarea
+                {...register('description')}
+                rows={2}
+                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>開始日時</label>
+                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} />
+                {errors.startAt && <p className="mt-1 text-xs text-red-400">{errors.startAt.message}</p>}
+              </div>
+              <div>
+                <label className={labelClass}>終了日時</label>
+                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} />
+                {errors.endAt && <p className="mt-1 text-xs text-red-400">{errors.endAt.message}</p>}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {field('担当者', 'assignee')}
+              {field('責任者', 'responsible')}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {field('お客様名', 'customerName')}
+              {field('ご依頼者', 'requester')}
             </div>
 
             <div className="flex gap-3 pt-2">
