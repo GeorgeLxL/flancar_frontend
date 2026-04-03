@@ -21,6 +21,8 @@ export const updateScheduleStatus = (id: number, status: string) =>
 export const deleteSchedule = (id: number) => api.delete(`/schedules/${id}`);
 
 export const getProducts = () => api.get('/smaregi/products').then(r => r.data);
+export const searchProducts = (q: string) => api.get('/smaregi/products/search', { params: { q } }).then(r => r.data);
 export const getStores = () => api.get('/smaregi/stores').then(r => r.data);
 export const getStaffs = () => api.get('/smaregi/staffs').then(r => r.data);
 export const getCustomers = () => api.get('/smaregi/customers').then(r => r.data);
+export const searchCustomers = (q: string) => api.get('/smaregi/customers/search', { params: { q } }).then(r => r.data);

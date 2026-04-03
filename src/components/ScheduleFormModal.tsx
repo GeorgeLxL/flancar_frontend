@@ -3,26 +3,16 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import Select from 'react-select';
+import AsyncSelect from 'react-select/async';
 import toast from 'react-hot-toast';
 import { scheduleSchema, type ScheduleFormData } from '../schemas/schedule';
 import { useAuth } from './AuthContext';
 import Swal from 'sweetalert2';
-import { createSchedule, deleteSchedule, getProducts, getSchedule, getCustomers, getStaffs, updateSchedule } from '../api/client';
-
-interface Product {
-  productId: string;
-  productName: string;
-  unitPrice: number;
-}
+import { createSchedule, deleteSchedule, getSchedule, getStaffs, searchProducts, searchCustomers, updateSchedule } from '../api/client';
 
 interface Staff {
   staffId: string;
   staffName: string;
-}
-
-interface Customer {
-  customerId: string;
-  customerName: string;
 }
 
 interface Props {
@@ -68,7 +58,6 @@ function toDatetimeLocal(iso: string) {
   }
 }
 
-// Snap an ISO/datetime-local string to nearest 15-min boundary
 function snapTo15(value: string): string {
   try {
     const d = new Date(value);
@@ -81,17 +70,10 @@ function snapTo15(value: string): string {
   }
 }
 
-function DateTimeSelect({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function DateTimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const date = value ? value.slice(0, 10) : '';
   const hour = value ? value.slice(11, 13) : '09';
   const minute = value ? value.slice(14, 16) : '00';
-
   const update = (d: string, h: string, m: string) => onChange(`${d}T${h}:${m}`);
 
   return (
@@ -127,8 +109,6 @@ function DateTimeSelect({
 export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndDate, onClose, onSaved, onDeleted }: Props) {
   const isEdit = Boolean(scheduleId);
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [staffs, setStaffs] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(isEdit);
 
@@ -166,8 +146,6 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
   useEffect(() => {
-    getProducts().then(setProducts).catch(() => setProducts([]));
-    getCustomers().then(setCustomers).catch(() => setCustomers([]));
     getStaffs().then(data => {
       setStaffs(data);
       if (!isEdit && user?.staffId) {
@@ -191,12 +169,23 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
     }
   }, [scheduleId, isEdit, setValue]);
 
+  const loadProductOptions = async (q: string) => {
+    const data = await searchProducts(q);
+    return data.map((p: any) => ({
+      value: p.productId,
+      label: `${p.productName} (${p.unitPrice.toLocaleString()}円)`,
+      unitPrice: p.unitPrice,
+      productName: p.productName,
+    }));
+  };
+
+  const loadCustomerOptions = async (q: string) => {
+    const data = await searchCustomers(q);
+    return data.map((c: any) => ({ value: c.customerId, label: c.customerName }));
+  };
+
   const onSubmit = async (data: ScheduleFormData) => {
-    // Convert local datetime strings to ISO with timezone so Postgres stores correctly
-    const toISO = (local: string) => {
-      const d = new Date(local);
-      return d.toISOString();
-    };
+    const toISO = (local: string) => new Date(local).toISOString();
     const payload = {
       ...data,
       startAt: toISO(data.startAt),
@@ -227,14 +216,8 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
   );
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <h2 className="text-base font-semibold text-gray-900">
             {isEdit ? 'スケジュール編集' : '新規スケジュール'}
@@ -281,28 +264,27 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               {field('車種', 'carType')}
             </div>
 
+            {/* Member (customer) */}
             <div>
-              <label className={labelClass}>会員</label>
-              <Select
-                options={customers.map(c => ({ value: c.customerId, label: c.customerName }))}
-                value={
-                  customers.find(c => c.customerId === watch('customerId'))
-                    ? { value: watch('customerId'), label: customers.find(c => c.customerId === watch('customerId'))?.customerName }
-                    : null
-                }
+              <label className={labelClass}>メンバー</label>
+              <AsyncSelect
+                loadOptions={loadCustomerOptions}
+                defaultOptions
+                value={watch('customerId') ? { value: watch('customerId'), label: watch('customerName') } : null}
                 onChange={selected => {
                   setValue('customerId', selected?.value || '');
                   setValue('customerName', selected?.label || '');
                 }}
-                placeholder="選択してください"
+                placeholder="検索してください"
                 styles={selectStyles}
-                isSearchable
+                noOptionsMessage={() => '該当なし'}
+                loadingMessage={() => '検索中...'}
               />
               {errors.customerId && <p className="mt-1 text-xs text-red-400">{errors.customerId.message}</p>}
               <input type="hidden" {...register('customerName')} />
             </div>
 
-            {/* Items */}
+            {/* Products */}
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <label className={labelClass}>商品</label>
@@ -318,32 +300,25 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               <div className="space-y-2">
                 {fields.map((fieldItem, index) => {
                   const currentItem = watchedItems?.[index];
-                  const currentProduct = products.find(p => p.productId === currentItem?.productId);
                   const unitPrice = typeof currentItem?.unitPrice === 'number' && Number.isFinite(currentItem.unitPrice) ? currentItem.unitPrice : 0;
                   const qty = typeof currentItem?.quantity === 'number' && Number.isFinite(currentItem.quantity) ? currentItem.quantity : 0;
 
                   return (
                     <div key={fieldItem.id} className="rounded-xl bg-gray-50 p-3">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <Select
-                          options={products.map(p => ({
-                            value: p.productId,
-                            label: `${p.productName} (${p.unitPrice.toLocaleString()}円)`,
-                          }))}
-                          value={
-                            currentProduct
-                              ? { value: currentProduct.productId, label: `${currentProduct.productName} (${currentProduct.unitPrice.toLocaleString()}円)` }
-                              : null
-                          }
+                        <AsyncSelect
+                          loadOptions={loadProductOptions}
+                          defaultOptions
+                          value={currentItem?.productId ? { value: currentItem.productId, label: `${currentItem.productName} (${unitPrice.toLocaleString()}円)` } : null}
                           onChange={selected => {
-                            const p = products.find(p => p.productId === selected?.value);
                             setValue(`items.${index}.productId`, selected?.value || '');
-                            setValue(`items.${index}.productName`, p?.productName || '');
-                            setValue(`items.${index}.unitPrice`, p?.unitPrice || 0);
+                            setValue(`items.${index}.productName`, (selected as any)?.productName || '');
+                            setValue(`items.${index}.unitPrice`, (selected as any)?.unitPrice || 0);
                           }}
-                          placeholder="商品を選択"
+                          placeholder="商品を検索"
                           styles={selectStyles}
-                          isSearchable
+                          noOptionsMessage={() => '該当なし'}
+                          loadingMessage={() => '検索中...'}
                           className="flex-1"
                         />
                         <input type="hidden" {...register(`items.${index}.productName`)} />
@@ -399,27 +374,26 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>担当者</label>
-                <Select
-                  options={staffs.map(s => ({ value: s.staffId, label: s.staffName }))}
-                  value={
-                    staffs.find(s => s.staffId === watch('staffId'))
-                      ? { value: watch('staffId'), label: staffs.find(s => s.staffId === watch('staffId'))?.staffName }
-                      : null
-                  }
-                  onChange={selected => {
-                    setValue('staffId', selected?.value || '');
-                    setValue('staffName', selected?.label || '');
-                  }}
-                  placeholder="選択してください"
-                  styles={selectStyles}
-                  isSearchable
-                />
-                {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
-                <input type="hidden" {...register('staffName')} />
-              </div>
+            {/* Staff */}
+            <div>
+              <label className={labelClass}>担当者</label>
+              <Select
+                options={staffs.map(s => ({ value: s.staffId, label: s.staffName }))}
+                value={
+                  staffs.find(s => s.staffId === watch('staffId'))
+                    ? { value: watch('staffId'), label: staffs.find(s => s.staffId === watch('staffId'))?.staffName }
+                    : null
+                }
+                onChange={selected => {
+                  setValue('staffId', selected?.value || '');
+                  setValue('staffName', selected?.label || '');
+                }}
+                placeholder="選択してください"
+                styles={selectStyles}
+                isSearchable
+              />
+              {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
+              <input type="hidden" {...register('staffName')} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
