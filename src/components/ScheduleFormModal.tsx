@@ -5,8 +5,9 @@ import { format } from 'date-fns';
 import Select from 'react-select';
 import toast from 'react-hot-toast';
 import { scheduleSchema, type ScheduleFormData } from '../schemas/schedule';
+import { useAuth } from './AuthContext';
 import Swal from 'sweetalert2';
-import { createSchedule, deleteSchedule, getProducts, getSchedule, getStaffs, updateSchedule } from '../api/client';
+import { createSchedule, deleteSchedule, getProducts, getSchedule, getCustomers, getStaffs, updateSchedule } from '../api/client';
 
 interface Product {
   productId: string;
@@ -17,6 +18,11 @@ interface Product {
 interface Staff {
   staffId: string;
   staffName: string;
+}
+
+interface Customer {
+  customerId: string;
+  customerName: string;
 }
 
 interface Props {
@@ -120,7 +126,9 @@ function DateTimeSelect({
 
 export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndDate, onClose, onSaved, onDeleted }: Props) {
   const isEdit = Boolean(scheduleId);
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [staffs, setStaffs] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(isEdit);
 
@@ -145,8 +153,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
       items: [],
       startAt: defaultStart,
       endAt: defaultEnd,
-      staffId: '',
-      staffName: '',
+      customerId: '',
+      customerName: '',
+      staffId: user?.staffId || '',
+      staffName: user?.staffName || '',
+      customer: '',
+      requester: '',
     },
   });
 
@@ -155,7 +167,14 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
 
   useEffect(() => {
     getProducts().then(setProducts).catch(() => setProducts([]));
-    getStaffs().then(setStaffs).catch(() => setStaffs([]));
+    getCustomers().then(setCustomers).catch(() => setCustomers([]));
+    getStaffs().then(data => {
+      setStaffs(data);
+      if (!isEdit && user?.staffId) {
+        setValue('staffId', user.staffId);
+        setValue('staffName', user.staffName || '');
+      }
+    }).catch(() => setStaffs([]));
 
     if (isEdit && scheduleId) {
       getSchedule(scheduleId).then((schedule: any) => {
@@ -185,6 +204,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
       items: data.items.map(item => ({
         productId: item.productId,
         productName: item.productName,
+        unitPrice: item.unitPrice,
         quantity: item.quantity,
       })),
     };
@@ -264,22 +284,22 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             <div>
               <label className={labelClass}>会員</label>
               <Select
-                options={staffs.map(s => ({ value: s.staffId, label: s.staffName }))}
+                options={customers.map(c => ({ value: c.customerId, label: c.customerName }))}
                 value={
-                  staffs.find(s => s.staffId === watch('staffId'))
-                    ? { value: watch('staffId'), label: staffs.find(s => s.staffId === watch('staffId'))?.staffName }
+                  customers.find(c => c.customerId === watch('customerId'))
+                    ? { value: watch('customerId'), label: customers.find(c => c.customerId === watch('customerId'))?.customerName }
                     : null
                 }
                 onChange={selected => {
-                  setValue('staffId', selected?.value || '');
-                  setValue('staffName', selected?.label || '');
+                  setValue('customerId', selected?.value || '');
+                  setValue('customerName', selected?.label || '');
                 }}
                 placeholder="選択してください"
                 styles={selectStyles}
                 isSearchable
               />
-              {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
-              <input type="hidden" {...register('staffName')} />
+              {errors.customerId && <p className="mt-1 text-xs text-red-400">{errors.customerId.message}</p>}
+              <input type="hidden" {...register('customerName')} />
             </div>
 
             {/* Items */}
@@ -327,9 +347,14 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           className="flex-1"
                         />
                         <input type="hidden" {...register(`items.${index}.productName`)} />
-                        <input type="hidden" {...register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
                         <div className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-400 w-20 text-right">{unitPrice.toLocaleString()}円</span>
+                          <input
+                            type="number"
+                            {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
+                            className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            min={0}
+                          />
+                          <span className="text-gray-400 text-xs">円</span>
                           <input
                             type="number"
                             {...register(`items.${index}.quantity`, { valueAsNumber: true })}
@@ -375,12 +400,30 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {field('担当者', 'assignee')}
-              {field('責任者', 'responsible')}
+              <div>
+                <label className={labelClass}>担当者</label>
+                <Select
+                  options={staffs.map(s => ({ value: s.staffId, label: s.staffName }))}
+                  value={
+                    staffs.find(s => s.staffId === watch('staffId'))
+                      ? { value: watch('staffId'), label: staffs.find(s => s.staffId === watch('staffId'))?.staffName }
+                      : null
+                  }
+                  onChange={selected => {
+                    setValue('staffId', selected?.value || '');
+                    setValue('staffName', selected?.label || '');
+                  }}
+                  placeholder="選択してください"
+                  styles={selectStyles}
+                  isSearchable
+                />
+                {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
+                <input type="hidden" {...register('staffName')} />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {field('お客様名', 'customerName')}
+              {field('お客様名', 'customer')}
               {field('ご依頼者', 'requester')}
             </div>
 

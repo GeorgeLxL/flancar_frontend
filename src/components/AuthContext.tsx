@@ -3,6 +3,7 @@ import { getMe } from '../api/client';
 
 export interface User {
   email: string;
+  staffId: string;
   staffName: string;
   roleId: String;
   accessToken: string;
