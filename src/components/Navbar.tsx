@@ -16,23 +16,16 @@ export default function Navbar() {
     if (!user) return;
     setSyncing(true);
     try {
-      await api.post('/webhook', { accessToken: user.accessToken }, {
+      await api.post('/webhook/now', { accessToken: user.accessToken }, {
         headers: { 'x-sdsch-secret': import.meta.env.VITE_WEBHOOK_SECRET },
-      });
-      // Poll until server reports sync is done
-      const poll = setInterval(async () => {
-        try {
-          const { data } = await api.get('/webhook/status');
-          if (!data.syncing) {
-            clearInterval(poll);
-            setSyncing(false);
-            toast.success('DB同期が完了しました。');
-          }
-        } catch {
-          clearInterval(poll);
-          setSyncing(false);
+      }).then(r => {
+        if (r.data?.success) {
+          toast.success('DB同期が完了しました。');
         }
-      }, 3000);
+      }).catch(e => {
+        toast.error('DB同期に失敗しました。');
+        console.error('Sync failed:', e);
+      });
     } catch {
       toast.error('DB同期に失敗しました。');
       setSyncing(false);
