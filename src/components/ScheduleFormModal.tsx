@@ -319,7 +319,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 {fields.map((fieldItem, index) => {
                   const currentItem = watchedItems?.[index];
                   const currentProduct = products.find(p => p.productId === currentItem?.productId);
-                  const unitPrice = currentProduct?.unitPrice ?? currentItem?.unitPrice ?? 0;
+                  const unitPrice = typeof currentItem?.unitPrice === 'number' && Number.isFinite(currentItem.unitPrice) ? currentItem.unitPrice : 0;
                   const qty = typeof currentItem?.quantity === 'number' && Number.isFinite(currentItem.quantity) ? currentItem.quantity : 0;
 
                   return (
