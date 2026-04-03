@@ -21,10 +21,12 @@ export default function Navbar() {
       }).then(r => {
         if (r.data?.success) {
           toast.success('DB同期が完了しました。');
+          setSyncing(false);
         }
       }).catch(e => {
         toast.error('DB同期に失敗しました。');
         console.error('Sync failed:', e);
+        setSyncing(false);
       });
     } catch {
       toast.error('DB同期に失敗しました。');
