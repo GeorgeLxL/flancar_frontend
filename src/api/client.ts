@@ -23,3 +23,4 @@ export const deleteSchedule = (id: number) => api.delete(`/schedules/${id}`);
 export const getProducts = () => api.get('/smaregi/products').then(r => r.data);
 export const getStores = () => api.get('/smaregi/stores').then(r => r.data);
 export const getStaffs = () => api.get('/smaregi/staffs').then(r => r.data);
+export const getCustomers = () => api.get('/smaregi/customers').then(r => r.data);

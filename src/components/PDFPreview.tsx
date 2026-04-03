@@ -95,16 +95,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
-  staffBox: {
+  customerBox: {
     width: 110,
     border: '1 solid #808080',
   },
-  staffHeaderRow: {
+  customerHeaderRow: {
     flexDirection: 'row',
     backgroundColor: '#efefef',
     borderBottom: '1 solid #808080',
   },
-  staffCellHeader: {
+  customerCellHeader: {
     flex: 1,
     textAlign: 'center',
     paddingVertical: 4,
@@ -112,13 +112,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     borderRight: '1 solid #808080',
   },
-  staffCellHeaderLast: {
+  customerCellHeaderLast: {
     borderRight: '0 solid transparent',
   },
-  staffValueRow: {
+  customerValueRow: {
     flexDirection: 'row',
   },
-  staffValue: {
+  customerValue: {
     flex: 1,
     minHeight: 42,
     textAlign: 'center',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     borderRight: '1 solid #808080',
   },
-  staffValueLast: {
+  customerValueLast: {
     borderRight: '0 solid transparent',
   },
   noteText: {
@@ -289,11 +289,11 @@ export interface Schedule {
   description?: string;
   startAt: string;
   endAt: string;
-  staffName: string;
-  storeName?: string;
-  assignee: string;
-  responsible: string;
   customerName: string;
+  storeName?: string;
+  staffId: string;
+  staffName: string;
+  customer: string;
   requester: string;
   items: ScheduleItem[];
 }
@@ -335,7 +335,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
 
         <View style={styles.recipientLine}>
           <Text style={styles.recipientText}>{schedule.customerName}</Text>
-          <Text style={styles.shopText}>{schedule.staffName ?? schedule.storeName}</Text>
+          <Text style={styles.shopText}>{schedule.customerName ?? schedule.storeName}</Text>
         </View>
 
         <View style={styles.upperArea}>
@@ -346,14 +346,14 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
                 <Text style={styles.amountValue}>￥{yen(total)}</Text>
               </View>
 
-              <View style={styles.staffBox}>
-                <View style={styles.staffHeaderRow}>
-                  <Text style={styles.staffCellHeader}>担当者</Text>
-                  <Text style={[styles.staffCellHeader, styles.staffCellHeaderLast]}>責任者</Text>
+              <View style={styles.customerBox}>
+                <View style={styles.customerHeaderRow}>
+                  <Text style={styles.customerCellHeader}>担当者</Text>
+                  <Text style={[styles.customerCellHeader, styles.customerCellHeaderLast]}>責任者</Text>
                 </View>
-                <View style={styles.staffValueRow}>
-                  <Text style={styles.staffValue}>{schedule.assignee}</Text>
-                  <Text style={[styles.staffValue, styles.staffValueLast]}>{schedule.responsible}</Text>
+                <View style={styles.customerValueRow}>
+                  <Text style={styles.customerValue}>{schedule.staffName}</Text>
+                  <Text style={[styles.customerValue, styles.customerValueLast]}>河野</Text>
                 </View>
               </View>
             </View>
@@ -368,7 +368,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>お客様名:</Text>
-                <Text style={styles.detailValue}>{schedule.customerName}　様</Text>
+                <Text style={styles.detailValue}>{schedule.customer}　様</Text>
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>ご依頼者:</Text>
@@ -404,6 +404,30 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
               <Text style={styles.headerText}>金 額 (税別)</Text>
             </View>
           </View>
+          {Array.apply(2).map((_, index) => {
+            const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
+            return (
+              <View style={rowStyle}>
+                <View style={[styles.bodyCell, styles.colMaker]}>
+                  <Text style={styles.makerText}></Text>
+                </View>
+                <View style={[styles.bodyCell, styles.colProduct]}>
+                  <Text style={styles.productText}>
+                    {index === 0 ? '（工賃コミコミパック）' : ''}
+                  </Text>
+                </View>
+                <View style={[styles.bodyCell, styles.colQty]}>
+                  <Text style={styles.numberText}></Text>
+                </View>
+                <View style={[styles.bodyCell, styles.colUnit]}>
+                  <Text style={styles.numberText}></Text>
+                </View>
+                <View style={[styles.bodyCell, styles.colAmount, styles.lastCell]}>
+                  <Text style={styles.numberText}></Text>
+                </View>
+              </View>
+            );
+          })}
           {paddedItems.map((item, index) => {
             const amount = (item.unitPrice ?? 0) * item.quantity;
             const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
