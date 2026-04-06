@@ -12,19 +12,40 @@ export default function Navbar() {
   const { user, refetch } = useAuth();
   const [syncing, setSyncing] = useState(false);
 
-  const handleSync = async () => {
+  const handleSyncProducts = async () => {
     if (!user) return;
     setSyncing(true);
     try {
-      await api.post('/webhook/now', { accessToken: user.accessToken }, {
+      await api.post('/webhook/products', { accessToken: user.accessToken }, {
         headers: { 'x-sdsch-secret': import.meta.env.VITE_WEBHOOK_SECRET },
       }).then(r => {
         if (r.data?.success) {
-          toast.success('DB同期が完了しました。');
+          toast.success('商品DB同期が完了しました。');
           setSyncing(false);
         }
       }).catch(e => {
-        toast.error('DB同期に失敗しました。');
+        toast.error('商品DB同期に失敗しました。');
+        console.error('Sync failed:', e);
+        setSyncing(false);
+      });
+    } catch {
+      toast.error('DB同期に失敗しました。');
+      setSyncing(false);
+    }
+  };
+  const handleSyncCustomers = async () => {
+    if (!user) return;
+    setSyncing(true);
+    try {
+      await api.post('/webhook/customers', { accessToken: user.accessToken }, {
+        headers: { 'x-sdsch-secret': import.meta.env.VITE_WEBHOOK_SECRET },
+      }).then(r => {
+        if (r.data?.success) {
+          toast.success('会員DB同期が完了しました。');
+          setSyncing(false);
+        }
+      }).catch(e => {
+        toast.error('会員DB同期に失敗しました。');
         console.error('Sync failed:', e);
         setSyncing(false);
       });
@@ -64,11 +85,19 @@ export default function Navbar() {
                 </Link>
                 <button
                   type="button"
-                  onClick={handleSync}
+                  onClick={handleSyncProducts}
                   disabled={syncing}
                   className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50"
                 >
-                  {syncing ? 'DB同期中...' : 'DB同期'}
+                  {syncing ? '商品DB同期中...' : '商品DB同期'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSyncCustomers}
+                  disabled={syncing}
+                  className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {syncing ? '会員DB同期中...' : '会員DB同期'}
                 </button>
               </>
             )}

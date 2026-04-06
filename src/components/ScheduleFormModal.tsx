@@ -266,7 +266,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
 
             {/* Member (customer) */}
             <div>
-              <label className={labelClass}>メンバー</label>
+              <label className={labelClass}>会員(取引先)</label>
               <AsyncSelect
                 loadOptions={loadCustomerOptions}
                 defaultOptions
