@@ -278,6 +278,7 @@ type ScheduleStatus = 'draft' | 'pending' | 'sent' | 'finished';
 
 type ScheduleItem = {
   productName: string;
+  maker?: string;
   quantity: number;
   unitPrice?: number;
 };
@@ -304,12 +305,6 @@ function formatDate(value: string, pattern: string) {
 
 function yen(value: number) {
   return value.toLocaleString();
-}
-
-function makerFromItemName(name: string) {
-  const first = name.split(' ')[0];
-  if (first.length <= 8) return first;
-  return '';
 }
 
 function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) {
@@ -404,7 +399,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
               <Text style={styles.headerText}>金 額 (税別)</Text>
             </View>
           </View>
-          {Array.apply(2).map((_, index) => {
+          {Array.from({ length: 2 }).map((_, index) => {
             const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
             return (
               <View style={rowStyle}>
@@ -434,7 +429,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
             return (
               <View key={`${item.productName}-${index}`} style={rowStyle}>
                 <View style={[styles.bodyCell, styles.colMaker]}>
-                  <Text style={styles.makerText}>{item.productName ? makerFromItemName(item.productName) : ''}</Text>
+                  <Text style={styles.makerText}>{item.productName ? (item.maker ?? '') : ''}</Text>
                 </View>
                 <View style={[styles.bodyCell, styles.colProduct]}>
                   <Text style={styles.productText}>{item.productName}</Text>

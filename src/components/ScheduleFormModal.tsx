@@ -193,6 +193,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
       items: data.items.map(item => ({
         productId: item.productId,
         productName: item.productName,
+        maker: item.maker ?? '',
         unitPrice: item.unitPrice,
         quantity: item.quantity,
       })),
@@ -290,7 +291,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 <label className={labelClass}>商品</label>
                 <button
                   type="button"
-                  onClick={() => append({ productId: '', productName: '', unitPrice: 0, quantity: 1 })}
+                  onClick={() => append({ productId: '', productName: '', maker: '', unitPrice: 0, quantity: 1 })}
                   className="rounded-xl border border-gray-200 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
                 >
                   ＋ 追加
@@ -313,6 +314,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           onChange={selected => {
                             setValue(`items.${index}.productId`, selected?.value || '');
                             setValue(`items.${index}.productName`, (selected as any)?.productName || '');
+                            setValue(`items.${index}.maker`, (selected as any)?.maker || '');
                             setValue(`items.${index}.unitPrice`, (selected as any)?.unitPrice || 0);
                           }}
                           placeholder="商品を検索"
@@ -322,6 +324,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           className="flex-1"
                         />
                         <input type="hidden" {...register(`items.${index}.productName`)} />
+                        <input type="hidden" {...register(`items.${index}.maker`)} />
                         <div className="flex items-center gap-2 text-sm">
                           <input
                             type="number"
