@@ -17,7 +17,7 @@ import {
   subWeeks,
 } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
-import { getSchedulesByRange } from '../api/client';
+import { getSchedulesByRange, getStaffColors } from '../api/client';
 
 export interface CalendarEvent {
   id: number;
@@ -25,15 +25,19 @@ export interface CalendarEvent {
   startAt: string;
   endAt: string;
   status: 'draft' | 'pending' | 'sent' | 'finished';
+  staffId: string;
+  customerName: string;
+  requester: string;
+  items: { unitPrice: number; quantity: number }[];
 }
 
 export type CalendarView = 'day' | 'week' | 'month';
 
-const STATUS_COLOR: Record<CalendarEvent['status'], string> = {
-  draft: 'bg-gray-400',
-  pending: 'bg-yellow-400',
-  sent: 'bg-blue-500',
-  finished: 'bg-emerald-500',
+const STATUS_COLOR_HEX: Record<CalendarEvent['status'], string> = {
+  draft: '#9ca3af',
+  pending: '#facc15',
+  sent: '#3b82f6',
+  finished: '#10b981',
 };
 
 const STATUS_LABEL: Record<CalendarEvent['status'], string> = {
@@ -88,43 +92,73 @@ function eventsForDay(events: CalendarEvent[], day: Date) {
   });
 }
 
-function eventsStartingAtSlot(events: CalendarEvent[], day: Date, slot: number) {
-  return events.filter(e => {
-    const start = new Date(e.startAt);
-    return isSameDay(day, start) && dateToSlot(start) === slot;
-  });
+// ── Overlap layout calculation ────────────────────────────────────────────────
+const SLOT_HEIGHT = 14; // px per 15-min slot
+
+interface LayoutEvent {
+  event: CalendarEvent;
+  col: number;
+  totalCols: number;
+  startSlot: number;
+  endSlot: number;
 }
 
-function eventSpansSlot(event: CalendarEvent, day: Date, slot: number) {
-  const start = new Date(event.startAt);
-  const end = new Date(event.endAt);
-  if (!isSameDay(day, start) && !isSameDay(day, end) && !(day > start && day < end)) return false;
-  const startSlot = isSameDay(day, start) ? dateToSlot(start) : 0;
-  const endSlot = isSameDay(day, end) ? dateToSlot(end) : 96;
-  return slot > startSlot && slot < endSlot;
-}
+function layoutEventsForDay(events: CalendarEvent[], day: Date): LayoutEvent[] {
+  const dayEvents = events
+    .filter(e => {
+      const start = new Date(e.startAt);
+      const end = new Date(e.endAt);
+      return isSameDay(day, start) || isSameDay(day, end) || (day > start && day < end);
+    })
+    .map(e => {
+      const start = new Date(e.startAt);
+      const end = new Date(e.endAt);
+      return {
+        event: e,
+        startSlot: isSameDay(day, start) ? dateToSlot(start) : 0,
+        endSlot: isSameDay(day, end) ? dateToSlot(end) : 96,
+      };
+    })
+    .sort((a, b) => a.startSlot - b.startSlot);
 
-function EventPill({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={e => { e.stopPropagation(); onClick(); }}
-      className={`w-full text-left rounded px-1.5 py-0.5 text-xs text-white truncate ${STATUS_COLOR[event.status]} hover:opacity-80 transition-opacity`}
-    >
-      {format(new Date(event.startAt), 'HH:mm')} {event.title}
-    </button>
-  );
+  const cols: number[] = [];
+  const result: LayoutEvent[] = [];
+
+  for (const item of dayEvents) {
+    // Find first column where this event doesn't overlap
+    let col = 0;
+    while (
+      result.some(
+        r => r.col === col && r.startSlot < item.endSlot && r.endSlot > item.startSlot
+      )
+    ) col++;
+    cols.push(col);
+    result.push({ ...item, col, totalCols: 1 });
+  }
+
+  // Calculate totalCols for each event group
+  for (let i = 0; i < result.length; i++) {
+    const overlapping = result.filter(
+      r => r.startSlot < result[i].endSlot && r.endSlot > result[i].startSlot
+    );
+    const maxCol = Math.max(...overlapping.map(r => r.col));
+    for (const r of overlapping) r.totalCols = maxCol + 1;
+  }
+
+  return result;
 }
 
 // ── Time grid: hour labels + 15-min draggable slots ───────────────────────────
 function TimeGrid({
   days,
   events,
+  staffColors,
   onRangeSelect,
   onEventClick,
 }: {
   days: Date[];
   events: CalendarEvent[];
+  staffColors: Record<string, string>;
   onRangeSelect?: (start: Date, end: Date) => void;
   onEventClick?: (event: CalendarEvent) => void;
 }) {
@@ -210,21 +244,16 @@ function TimeGrid({
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
-        {/*
-          Each hour = 56px tall, split into 4 × 14px slots.
-          Hour label sits in the first slot of each hour group.
-        */}
-        <div className="grid" style={{ gridTemplateColumns: `48px repeat(${days.length}, 1fr)` }}>
-          {SLOTS.map(slot => {
-            const isHourStart = slot % 4 === 0;
-            const hour = Math.floor(slot / 4);
-
-            return (
-              <>
-                {/* Time label column */}
+        <div className="relative grid" style={{ gridTemplateColumns: `48px repeat(${days.length}, 1fr)` }}>
+          {/* Time label column */}
+          <div className="relative" style={{ gridColumn: 1, gridRow: '1 / span 96' }}>
+            {SLOTS.map(slot => {
+              const isHourStart = slot % 4 === 0;
+              const hour = Math.floor(slot / 4);
+              return (
                 <div
                   key={`lbl-${slot}`}
-                  className={`h-3.5 flex items-start justify-end pr-2 shrink-0 border-r border-gray-200  ${isHourStart ? 'border-t' : ''}`}
+                  className={`h-3.5 flex items-start justify-end pr-2 border-r border-gray-200 ${isHourStart ? 'border-t border-gray-300' : ''}`}
                 >
                   {isHourStart && (
                     <span className="text-xs text-gray-500 -mt-2 leading-none">
@@ -232,22 +261,34 @@ function TimeGrid({
                     </span>
                   )}
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Day slot cells */}
-                {days.map((day, di) => {
-                  const startingEvents = eventsStartingAtSlot(events, day, slot);
-                  const spanningEvents = events.filter(e => eventSpansSlot(e, day, slot));
-                  const isNow = isToday(day) && nowSlot === slot;
+          {/* Day columns */}
+          {days.map((day, di) => {
+            const layout = layoutEventsForDay(events, day);
+            const isNowDay = isToday(day);
+
+            return (
+              <div
+                key={day.toISOString()}
+                className="relative border-r border-gray-200 last:border-r-0"
+                style={{ gridColumn: di + 2 }}
+              >
+                {/* Slot cells for interaction */}
+                {SLOTS.map(slot => {
+                  const isHourStart = slot % 4 === 0;
+                  const isNow = isNowDay && nowSlot === slot;
                   const dragging = isDragging(di, slot);
-
                   return (
                     <div
-                      key={`${day.toISOString()}-${slot}`}
+                      key={slot}
                       onMouseDown={e => onMouseDown(di, slot, e)}
                       onMouseEnter={() => onMouseEnter(di, slot)}
                       onClick={() => onClick(di, slot)}
-                      className={`border-r border-gray-200 last:border-r-0 h-3.5 px-px cursor-pointer relative transition-colors ${
-                        isHourStart ? 'border-t' : ''
+                      className={`h-3.5 cursor-pointer relative ${
+                        isHourStart ? 'border-t border-gray-300' : ''
                       } ${dragging ? 'bg-blue-100' : 'hover:bg-gray-50'}`}
                     >
                       {isNow && (
@@ -256,20 +297,34 @@ function TimeGrid({
                           className="absolute left-0 right-0 border-t-2 border-red-400 z-10 pointer-events-none"
                         />
                       )}
-                      {startingEvents.map(e => (
-                        <EventPill key={e.id} event={e} onClick={() => onEventClick?.(e)} />
-                      ))}
-                      {spanningEvents.map(e => (
-                        <div
-                          key={e.id}
-                          onClick={ev => { ev.stopPropagation(); onEventClick?.(e); }}
-                          className={`absolute inset-x-px inset-y-0 ${STATUS_COLOR[e.status]} opacity-80 cursor-pointer z-10`}
-                        />
-                      ))}
                     </div>
                   );
                 })}
-              </>
+
+                {/* Absolutely positioned events */}
+                {layout.map(({ event, col, totalCols, startSlot, endSlot }) => {
+                  const top = startSlot * SLOT_HEIGHT;
+                  const height = Math.max((endSlot - startSlot) * SLOT_HEIGHT, SLOT_HEIGHT * 2);
+                  const colW = 85 / totalCols;
+                  const left = col * colW + 1;
+                  const width = colW - 1;
+                  const bgColor = staffColors[event.staffId] ?? STATUS_COLOR_HEX[event.status];
+                  const totalPrice = event.items?.reduce((s, i) => s + i.unitPrice * i.quantity, 0) ?? 0;
+                  return (
+                    <div
+                      key={event.id}
+                      onClick={e => { e.stopPropagation(); onEventClick?.(event); }}
+                      style={{ position: 'absolute', top, height, left: `${left}%`, width: `${width}%`, backgroundColor: bgColor }}
+                      className="rounded px-1 py-0.5 text-xs text-white cursor-pointer z-20 overflow-hidden shadow-sm hover:opacity-90 transition-opacity"
+                    >
+                      <div className="font-semibold truncate leading-tight">{event.title}</div>
+                      <div className="truncate opacity-90 leading-tight">
+                        {format(new Date(event.startAt), 'HH:mm')}–{format(new Date(event.endAt), 'HH:mm')} {event.customerName} / {event.requester} / ¥{totalPrice.toLocaleString()} / (TAX)¥{Math.floor(totalPrice * 0.1).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             );
           })}
         </div>
@@ -282,11 +337,13 @@ function TimeGrid({
 function MonthView({
   anchor,
   events,
+  staffColors,
   onRangeSelect,
   onEventClick,
 }: {
   anchor: Date;
   events: CalendarEvent[];
+  staffColors: Record<string, string>;
   onRangeSelect?: (start: Date, end: Date) => void;
   onEventClick?: (event: CalendarEvent) => void;
 }) {
@@ -349,9 +406,23 @@ function MonthView({
                 </span>
               </div>
               <div className="space-y-0.5">
-                {dayEvents.slice(0, 3).map(event => (
-                  <EventPill key={event.id} event={event} onClick={() => onEventClick?.(event)} />
-                ))}
+                {dayEvents.slice(0, 3).map(event => {
+                  const totalPrice = event.items?.reduce((s, i) => s + i.unitPrice * i.quantity, 0) ?? 0;
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={e => { e.stopPropagation(); onEventClick?.(event); }}
+                      style={{ backgroundColor: staffColors[event.staffId] ?? STATUS_COLOR_HEX[event.status] }}
+                      className="w-full text-left rounded px-1.5 py-0.5 text-xs text-white hover:opacity-80 transition-opacity"
+                    >
+                      <div className="font-semibold truncate">{event.title}</div>
+                      <div className="truncate opacity-90">
+                        {format(new Date(event.startAt), 'HH:mm')}–{format(new Date(event.endAt), 'HH:mm')} {event.customerName} / {event.requester} / ¥{totalPrice.toLocaleString()} / (TAX)¥{Math.floor(totalPrice * 0.1).toLocaleString()}
+                      </div>
+                    </button>
+                  );
+                })}
                 {dayEvents.length > 3 && (
                   <div className="text-xs text-gray-400 px-1">+{dayEvents.length - 3} 件</div>
                 )}
@@ -369,7 +440,16 @@ export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: Ca
   const [view, setView] = useState<CalendarView>(getDefaultView);
   const [anchor, setAnchor] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [staffColors, setStaffColors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    getStaffColors().then(setStaffColors).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getStaffColors().then(setStaffColors).catch(() => {});
+  }, [refreshKey]);
 
   useEffect(() => {
     const { from, to } = rangeForView(view, anchor);
@@ -430,18 +510,19 @@ export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: Ca
         </div>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap text-xs text-gray-400">
         {(Object.keys(STATUS_LABEL) as CalendarEvent['status'][]).map(s => (
-          <div key={s} className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span className={`inline-block w-2.5 h-2.5 rounded-full ${STATUS_COLOR[s]}`} />
+          <div key={s} className="flex items-center gap-1.5">
+            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLOR_HEX[s] }} />
             {STATUS_LABEL[s]}
           </div>
         ))}
+        <span className="text-gray-300">※ 担当者の色が設定されている場合はその色で表示</span>
       </div>
 
-      {view === 'month' && <MonthView anchor={anchor} events={events} onRangeSelect={onRangeSelect} onEventClick={onEventClick} />}
-      {view === 'week' && <TimeGrid days={weekDays} events={events} onRangeSelect={onRangeSelect} onEventClick={onEventClick} />}
-      {view === 'day' && <TimeGrid days={[anchor]} events={events} onRangeSelect={onRangeSelect} onEventClick={onEventClick} />}
+      {view === 'month' && <MonthView anchor={anchor} events={events} staffColors={staffColors} onRangeSelect={onRangeSelect} onEventClick={onEventClick} />}
+      {view === 'week' && <TimeGrid days={weekDays} events={events} staffColors={staffColors} onRangeSelect={onRangeSelect} onEventClick={onEventClick} />}
+      {view === 'day' && <TimeGrid days={[anchor]} events={events} staffColors={staffColors} onRangeSelect={onRangeSelect} onEventClick={onEventClick} />}
     </div>
   );
 }

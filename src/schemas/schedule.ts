@@ -5,6 +5,7 @@ const req = z.string({ error: '必須項目です' }).min(1, '必須項目です
 export const scheduleItemSchema = z.object({
   productId: req,
   productName: req,
+  maker: z.string(),
   unitPrice: z.number().nonnegative(),
   quantity: z.number().int().positive(),
 });
