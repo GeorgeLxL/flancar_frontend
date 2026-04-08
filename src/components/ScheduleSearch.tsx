@@ -40,21 +40,9 @@ function getTotalPrice(items: SearchResult['items']) {
 export default function ScheduleSearch({ onSelect }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [staffColors, setStaffColors] = useState<Record<string, string>>({});
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   useEffect(() => {
     getStaffColors().then(setStaffColors).catch(() => {});
@@ -66,7 +54,6 @@ export default function ScheduleSearch({ onSelect }: Props) {
 
     if (!value.trim()) {
       setResults([]);
-      setOpen(false);
       return;
     }
 
@@ -75,7 +62,6 @@ export default function ScheduleSearch({ onSelect }: Props) {
       try {
         const data = await searchSchedules(value.trim());
         setResults(data);
-        setOpen(true);
       } catch {
         setResults([]);
       } finally {
@@ -85,27 +71,26 @@ export default function ScheduleSearch({ onSelect }: Props) {
   };
 
   const handleSelect = (id: number) => {
-    setOpen(false);
     setQuery('');
     setResults([]);
     onSelect(id);
   };
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-md">
+    <div className="flex w-full flex-col">
       <div className="relative">
         <input
           type="text"
           value={query}
           onChange={e => handleChange(e.target.value)}
           placeholder="タイトル・お客様・商品名などで検索..."
-          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
         />
         {loading ? (
-          <span className="absolute right-3 top-2.5 text-xs text-gray-300">検索中...</span>
+          <span className="absolute right-3 top-3 text-xs text-gray-300">検索中...</span>
         ) : (
           <svg
-            className="absolute right-3 top-2.5 h-4 w-4 text-gray-300"
+            className="absolute right-3 top-3 h-4 w-4 text-gray-300"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -120,43 +105,47 @@ export default function ScheduleSearch({ onSelect }: Props) {
         )}
       </div>
 
-      {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-96 overflow-y-auto rounded-2xl border border-gray-100 bg-white shadow-lg">
-          {results.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-400">該当なし</div>
-          ) : (
-            results.map(result => {
-              const totalPrice = getTotalPrice(result.items);
-              const tax = Math.floor(totalPrice * 0.1);
-              const backgroundColor = staffColors[result.staffId] ?? STATUS_COLOR_HEX[result.status];
+      <div className="mt-4 min-h-[420px] overflow-y-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
+        {!query.trim() ? (
+          <div className="px-6 py-16 text-center text-sm text-gray-400">
+            タイトル・お客様・商品名などで検索してください
+          </div>
+        ) : loading ? (
+          <div className="px-6 py-16 text-center text-sm text-gray-400">検索中...</div>
+        ) : results.length === 0 ? (
+          <div className="px-6 py-16 text-center text-sm text-gray-400">該当なし</div>
+        ) : (
+          results.map(result => {
+            const totalPrice = getTotalPrice(result.items);
+            const tax = Math.floor(totalPrice * 0.1);
+            const backgroundColor = staffColors[result.staffId] ?? STATUS_COLOR_HEX[result.status];
 
-              return (
-                <div key={result.id} className="border-b border-gray-50 px-3 py-2 last:border-0">
-                  <button
-                    type="button"
-                    onClick={() => handleSelect(result.id)}
-                    style={{ backgroundColor }}
-                    className="w-full rounded-xl px-3 py-2 text-left text-white shadow-sm transition-opacity hover:opacity-90"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="truncate text-sm font-semibold">{result.title || '(無題)'}</div>
-                      <div className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
-                        {STATUS_LABEL[result.status]}
-                      </div>
+            return (
+              <div key={result.id} className="border-b border-gray-50 px-4 py-3 last:border-0">
+                <button
+                  type="button"
+                  onClick={() => handleSelect(result.id)}
+                  style={{ backgroundColor }}
+                  className="w-full rounded-xl px-4 py-3 text-left text-white shadow-sm transition-opacity hover:opacity-90"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="truncate text-sm font-semibold">{result.title || '(無題)'}</div>
+                    <div className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
+                      {STATUS_LABEL[result.status]}
                     </div>
-                    <div className="mt-1 truncate text-xs opacity-90">
-                      {format(new Date(result.startAt), 'HH:mm')}-{format(new Date(result.endAt), 'HH:mm')} {result.customerName} / {result.requester || result.staffName} / ¥{totalPrice.toLocaleString()} / (TAX)¥{tax.toLocaleString()}
-                    </div>
-                    <div className="mt-1 text-[11px] text-white/80">
-                      {format(new Date(result.startAt), 'yyyy/MM/dd HH:mm')} - {format(new Date(result.endAt), 'HH:mm')}
-                    </div>
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
+                  </div>
+                  <div className="mt-1 truncate text-xs opacity-90">
+                    {format(new Date(result.startAt), 'HH:mm')}-{format(new Date(result.endAt), 'HH:mm')} {result.customerName} / {result.requester || result.staffName} / ¥{totalPrice.toLocaleString()} / (TAX)¥{tax.toLocaleString()}
+                  </div>
+                  <div className="mt-1 text-[11px] text-white/80">
+                    {format(new Date(result.startAt), 'yyyy/MM/dd HH:mm')} - {format(new Date(result.endAt), 'HH:mm')}
+                  </div>
+                </button>
+              </div>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
