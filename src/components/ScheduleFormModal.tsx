@@ -176,6 +176,8 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
       label: `${p.productName} (${p.unitPrice.toLocaleString()}円)`,
       unitPrice: p.unitPrice,
       productName: p.productName,
+      maker: p.maker,
+      categoryId: p.categoryId,
     }));
   };
 
@@ -194,6 +196,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
         productId: item.productId,
         productName: item.productName,
         maker: item.maker ?? '',
+        categoryId: item.categoryId ?? '',
         unitPrice: item.unitPrice,
         quantity: item.quantity,
       })),
@@ -291,7 +294,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 <label className={labelClass}>商品</label>
                 <button
                   type="button"
-                  onClick={() => append({ productId: '', productName: '', maker: '', unitPrice: 0, quantity: 1 })}
+                  onClick={() => append({ productId: '', productName: '', maker: '', categoryId: '', unitPrice: 0, quantity: 1 })}
                   className="rounded-xl border border-gray-200 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
                 >
                   ＋ 追加
@@ -315,6 +318,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                             setValue(`items.${index}.productId`, selected?.value || '');
                             setValue(`items.${index}.productName`, (selected as any)?.productName || '');
                             setValue(`items.${index}.maker`, (selected as any)?.maker || '');
+                            setValue(`items.${index}.categoryId`, (selected as any)?.categoryId || '');
                             setValue(`items.${index}.unitPrice`, (selected as any)?.unitPrice || 0);
                           }}
                           placeholder="商品を検索"
@@ -325,6 +329,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                         />
                         <input type="hidden" {...register(`items.${index}.productName`)} />
                         <input type="hidden" {...register(`items.${index}.maker`)} />
+                        <input type="hidden" {...register(`items.${index}.categoryId`)} />
                         <div className="flex items-center gap-2 text-sm">
                           <input
                             type="number"

@@ -14,6 +14,7 @@ export const setMyColor = (color: string) => api.post('/auth/color', { color }).
 export const getStaffColors = () => api.get('/auth/staff-colors').then(r => r.data);
 
 export const getSchedules = () => api.get('/schedules').then(r => r.data);
+export const searchSchedules = (q: string) => api.get('/schedules/search', { params: { q } }).then(r => r.data);
 export const getSchedulesByRange = (from: Date, to: Date) =>
   api.get('/schedules/range', { params: { from: from.toISOString(), to: to.toISOString() } }).then(r => r.data);
 export const getSchedule = (id: number) => api.get(`/schedules/${id}`).then(r => r.data);
