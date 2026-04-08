@@ -47,45 +47,49 @@ export default function Worker() {
       <div className="mx-auto flex max-w-6xl flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">スケジュール</h1>
-            <p className="mt-0.5 text-sm text-gray-400">カレンダーをドラッグして新規作成、作成中のスケジュールをクリックして編集</p>
+            <h1 className="text-xl font-semibold text-gray-900">
+              {searchOpen ? 'スケジュール検索' : 'スケジュール'}
+            </h1>
+            <p className="mt-0.5 text-sm text-gray-400">
+              {searchOpen
+                ? 'キーワードからスケジュールを検索して開けます'
+                : 'カレンダーをドラッグして新規作成、作成中のスケジュールをクリックして編集'}
+            </p>
           </div>
 
-          <div className="w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => setSearchOpen(open => !open)}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            aria-label={searchOpen ? '検索を閉じる' : '検索を開く'}
+          >
             {searchOpen ? (
-              <div className="flex items-start gap-2">
-                <ScheduleSearch onSelect={handleSearchSelect} />
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(false)}
-                  className="shrink-0 rounded-xl border border-gray-200 bg-white p-2.5 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
-                  aria-label="検索を閉じる"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+              <>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                閉じる
+              </>
             ) : (
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
+              <>
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                 </svg>
                 検索
-              </button>
+              </>
             )}
-          </div>
+          </button>
         </div>
 
-        <Calendar
-          refreshKey={refreshKey}
-          onRangeSelect={handleRangeSelect}
-          onEventClick={handleEventClick}
-        />
+        {searchOpen ? (
+          <ScheduleSearch onSelect={handleSearchSelect} />
+        ) : (
+          <Calendar
+            refreshKey={refreshKey}
+            onRangeSelect={handleRangeSelect}
+            onEventClick={handleEventClick}
+          />
+        )}
       </div>
 
       {modal?.type === 'create' && (
