@@ -71,8 +71,6 @@ export default function ScheduleSearch({ onSelect }: Props) {
   };
 
   const handleSelect = (id: number) => {
-    setQuery('');
-    setResults([]);
     onSelect(id);
   };
 
