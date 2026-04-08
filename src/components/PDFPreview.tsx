@@ -279,6 +279,7 @@ type ScheduleStatus = 'draft' | 'pending' | 'sent' | 'finished';
 type ScheduleItem = {
   productName: string;
   maker?: string;
+  categoryName?: string;
   quantity: number;
   unitPrice?: number;
 };
@@ -432,7 +433,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
                   <Text style={styles.makerText}>{item.productName ? (item.maker ?? '') : ''}</Text>
                 </View>
                 <View style={[styles.bodyCell, styles.colProduct]}>
-                  <Text style={styles.productText}>{item.productName}</Text>
+                  <Text style={styles.productText}>{item.productName ? `${item.categoryName ? item.categoryName + ' ' : ''}${item.productName}` : ''}</Text>
                 </View>
                 <View style={[styles.bodyCell, styles.colQty]}>
                   <Text style={styles.numberText}>{item.quantity ? item.quantity : ''}</Text>

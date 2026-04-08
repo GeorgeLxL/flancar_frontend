@@ -1,28 +1,27 @@
 import { z } from 'zod';
 
-const req = z.string({ error: '必須項目です' }).min(1, '必須項目です');
-
 export const scheduleItemSchema = z.object({
-  productId: req,
-  productName: req,
+  productId: z.string(),
+  productName: z.string(),
   maker: z.string(),
+  categoryId: z.string(),
   unitPrice: z.number().nonnegative(),
   quantity: z.number().int().positive(),
 });
 
 export const scheduleSchema = z.object({
-  title: req,
-  carType: req,
+  title: z.string(),
+  carType: z.string(),
   description: z.string().optional(),
-  startAt: req,
-  endAt: req,
-  customerId: req,
-  customerName: req,
-  staffId: req,
-  staffName: req,
-  customer: req,
-  requester: req,
-  items: z.array(scheduleItemSchema).min(1, '商品を1つ以上選択してください'),
+  startAt: z.string(),
+  endAt: z.string(),
+  customerId: z.string(),
+  customerName: z.string(),
+  staffId: z.string(),
+  staffName: z.string(),
+  customer: z.string(),
+  requester: z.string(),
+  items: z.array(scheduleItemSchema),
 });
 
 export type ScheduleFormData = z.infer<typeof scheduleSchema>;
