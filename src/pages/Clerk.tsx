@@ -33,7 +33,6 @@ export default function Clerk() {
   };
 
   const handleSearchSelect = (id: number) => {
-    setSearchOpen(false);
     document.body.style.overflow = 'hidden';
     getSchedule(id)
       .then((data: PreviewScheduleWithMeta) => setSelected(data))

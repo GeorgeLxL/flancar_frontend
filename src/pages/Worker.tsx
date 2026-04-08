@@ -26,7 +26,6 @@ export default function Worker() {
   const handleSearchSelect = (id: number) => {
     getSchedule(id)
       .then((schedule: { id: number; status: string }) => {
-        setSearchOpen(false);
         if (schedule.status !== 'draft') {
           toast.error('作成中のスケジュールだけ編集できます。');
           return;
