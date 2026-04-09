@@ -9,9 +9,9 @@ const api = axios.create({
 export const login = (email: string) => api.post('/auth/login', { email }).then(r => r.data);
 export const getMe = () => api.get('/auth/me').then(r => r.data);
 export const logout = () => api.post('/auth/logout');
-export const getMyColor = () => api.get('/auth/color').then(r => r.data);
-export const setMyColor = (color: string) => api.post('/auth/color', { color }).then(r => r.data);
-export const getStaffColors = () => api.get('/auth/staff-colors').then(r => r.data);
+export const getStaffColors = () => api.get('/auth/staff_colors').then(r => r.data);
+export const setStaffColor = (staffId: string, color: string) =>
+  api.put(`/auth/staff_colors/${staffId}`, { color }).then(r => r.data);
 
 export const getSchedules = () => api.get('/schedules').then(r => r.data);
 export const searchSchedules = (q: string) => api.get('/schedules/search', { params: { q } }).then(r => r.data);

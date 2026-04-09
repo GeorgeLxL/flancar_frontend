@@ -135,7 +135,6 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
       endAt: defaultEnd,
       customerId: '',
       customerName: '',
-      creatorId: user?.staffId || '',
       staffId: user?.staffId || '',
       staffName: user?.staffName || '',
       customer: '',
@@ -150,7 +149,6 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
     getStaffs().then(data => {
       setStaffs(data);
       if (!isEdit && user?.staffId) {
-        setValue('creatorId', user.staffId);
         setValue('staffId', user.staffId);
         setValue('staffName', user.staffName || '');
       }
@@ -403,7 +401,6 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 isSearchable
               />
               {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
-              <input type="hidden" {...register('creatorId')} />
               <input type="hidden" {...register('staffName')} />
             </div>
 
