@@ -9,7 +9,6 @@ interface SearchResult {
   endAt: string;
   customerName: string;
   requester: string;
-  creatorId: string;
   staffId: string;
   staffName: string;
   status: 'draft' | 'pending' | 'sent' | 'finished';
@@ -117,7 +116,7 @@ export default function ScheduleSearch({ onSelect }: Props) {
           results.map(result => {
             const totalPrice = getTotalPrice(result.items);
             const tax = Math.floor(totalPrice * 0.1);
-            const backgroundColor = staffColors[result.creatorId] ?? STATUS_COLOR_HEX[result.status];
+            const backgroundColor = staffColors[result.staffId] ?? STATUS_COLOR_HEX[result.status];
 
             return (
               <div key={result.id} className="border-b border-gray-50 px-4 py-3 last:border-0">

@@ -293,7 +293,6 @@ export interface Schedule {
   endAt: string;
   customerName: string;
   storeName?: string;
-  creatorId?: string;
   staffId: string;
   staffName: string;
   customer: string;

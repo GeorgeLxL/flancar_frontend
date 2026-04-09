@@ -25,7 +25,6 @@ export interface CalendarEvent {
   startAt: string;
   endAt: string;
   status: 'draft' | 'pending' | 'sent' | 'finished';
-  creatorId: string;
   staffId: string;
   customerName: string;
   requester: string;
@@ -309,7 +308,7 @@ function TimeGrid({
                   const colW = 85 / totalCols;
                   const left = col * colW + 1;
                   const width = colW - 1;
-                  const bgColor = staffColors[event.creatorId] ?? STATUS_COLOR_HEX[event.status];
+                  const bgColor = staffColors[event.staffId] ?? STATUS_COLOR_HEX[event.status];
                   const totalPrice = event.items?.reduce((s, i) => s + i.unitPrice * i.quantity, 0) ?? 0;
                   return (
                     <div
@@ -414,7 +413,7 @@ function MonthView({
                       key={event.id}
                       type="button"
                       onClick={e => { e.stopPropagation(); onEventClick?.(event); }}
-                      style={{ backgroundColor: staffColors[event.creatorId] ?? STATUS_COLOR_HEX[event.status] }}
+                      style={{ backgroundColor: staffColors[event.staffId] ?? STATUS_COLOR_HEX[event.status] }}
                       className="w-full text-left rounded px-1.5 py-0.5 text-xs text-white hover:opacity-80 transition-opacity"
                     >
                       <div className="font-semibold truncate">{event.title}</div>
