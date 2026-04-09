@@ -169,7 +169,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
         setLoading(false);
       });
     }
-  }, [scheduleId, isEdit, setValue]);
+  }, [scheduleId, isEdit, setValue, user?.staffId, user?.staffName]);
 
   const loadProductOptions = async (q: string) => {
     const data = await searchProducts(q);
