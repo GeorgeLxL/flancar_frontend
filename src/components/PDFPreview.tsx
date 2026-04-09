@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { format } from 'date-fns';
-import { Document, Font, Image, Page, PDFViewer, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { useMemo } from 'react';
+import { BlobProvider, Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import markImage from '../assets/mark.jpg';
 
 Font.register({
@@ -480,6 +481,7 @@ export default function PDFPreview({
   const types: PdfType[] = ['estimate', 'order', 'delivery', 'invoice'];
   const [selected, setSelected] = useState<PdfType>('estimate');
   const [sending, setSending] = useState(false);
+  const document = useMemo(() => <SchedulePDF schedule={schedule} type={selected} />, [schedule, selected]);
 
   const handleSendFax = async () => {
     if (!onSendPdf) return;
@@ -518,9 +520,33 @@ export default function PDFPreview({
           </button>
         ))}
       </div>
-      <PDFViewer width="100%" height={860}>
-        <SchedulePDF schedule={schedule} type={selected} />
-      </PDFViewer>
+      <BlobProvider document={document}>
+        {({ url, loading, error }) => {
+          if (loading) {
+            return (
+              <div className="flex h-[860px] items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500">
+                PDFを生成中...
+              </div>
+            );
+          }
+
+          if (error || !url) {
+            return (
+              <div className="flex h-[860px] items-center justify-center rounded-xl border border-red-200 bg-red-50 px-6 text-sm text-red-600">
+                PDFの表示に失敗しました。
+              </div>
+            );
+          }
+
+          return (
+            <iframe
+              src={`${url}#toolbar=1`}
+              title="PDF preview"
+              className="h-[860px] w-full rounded-xl border border-gray-200"
+            />
+          );
+        }}
+      </BlobProvider>
     </div>
   );
 }
