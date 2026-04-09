@@ -63,7 +63,7 @@ export default function Navbar() {
 
   const roleLabel = user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : '';
   const switchTo = location.pathname.includes('/worker') ? '/clerk' : '/worker';
-  const switchLabel = location.pathname.includes('/worker') ? 'To Clerk' : 'To Worker';
+  const switchLabel = location.pathname.includes('/worker') ? '事務員へ' : '作業者へ';
 
   return (
     <nav className="relative z-40 border-b border-gray-100 bg-white">
@@ -85,13 +85,13 @@ export default function Navbar() {
                     {switchLabel}
                   </Link>
                   <Link to="/staff_colors" className="shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 transition-colors hover:bg-emerald-100">
-                    Staff Colors
+                    色選択
                   </Link>
                   <button type="button" onClick={handleSyncProducts} disabled={syncing} className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50">
-                    {syncing ? 'Syncing...' : 'Product DB Sync'}
+                    {syncing ? '商品DB同期中...' : '商品db同期'}
                   </button>
                   <button type="button" onClick={handleSyncCustomers} disabled={syncing} className="shrink-0 rounded-xl border border-gray-200 px-3 py-2 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50">
-                    {syncing ? 'Syncing...' : 'Customer DB Sync'}
+                    {syncing ? '会員DB同期中...' : '会員db同期'}
                   </button>
                 </>
               )}
@@ -128,10 +128,10 @@ export default function Navbar() {
                         Staff Colors
                       </Link>
                       <button type="button" onClick={handleSyncProducts} disabled={syncing} className="border-b border-gray-100 px-4 py-3 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50">
-                        {syncing ? 'Syncing...' : 'Product DB Sync'}
+                        {syncing ? '商品DB同期中...' : '商品db同期'}
                       </button>
                       <button type="button" onClick={handleSyncCustomers} disabled={syncing} className="border-b border-gray-100 px-4 py-3 text-left text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50">
-                        {syncing ? 'Syncing...' : 'Customer DB Sync'}
+                        {syncing ? '会員DB同期中...' : '会員db同期'}
                       </button>
                     </>
                   )}
