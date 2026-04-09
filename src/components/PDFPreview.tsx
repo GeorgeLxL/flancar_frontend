@@ -330,13 +330,13 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
           </View>
         </View>
 
-        <View style={styles.recipientLine}>
-          <Text style={styles.recipientText}>{schedule.customerName}</Text>
-          <Text style={styles.shopText}>{schedule.customerName ?? schedule.storeName}</Text>
-        </View>
-
         <View style={styles.upperArea}>
           <View style={styles.leftInfo}>
+            <View style={styles.recipientLine}>
+              <Text style={styles.recipientText}>{schedule.customerName}</Text>
+              <Text style={styles.shopText}>御中</Text>
+            </View>
+            
             <View style={styles.amountArea}>
               <View style={styles.amountBox}>
                 <Text style={styles.amountHeader}>御請求金額</Text>
