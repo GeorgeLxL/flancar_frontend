@@ -121,7 +121,7 @@ export default function Navbar() {
                   </div>
                   {user.roleId === '1' && (
                     <>
-                      <Link to={switchTo} onClick={() => setMenuOpen(false)} className="border-b border-gray-100 px-4 py-3 text-sm text-blue-600 transition-colors hover:bg-gray-50">
+                      <Link to={switchTo} onClick={() => setMenuOpen(false)} className="border-b border-gray-100 px-4 py-3 text-sm text-blue-700 transition-colors hover:bg-gray-50">
                         {switchLabel}
                       </Link>
                       <Link to="/staff_colors" onClick={() => setMenuOpen(false)} className="border-b border-gray-100 px-4 py-3 text-sm text-emerald-700 transition-colors hover:bg-gray-50">
