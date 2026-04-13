@@ -25,7 +25,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-gray-200';
+  'w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed';
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wider text-gray-400';
 
 const selectStyles = {
@@ -70,7 +70,7 @@ function snapTo15(value: string): string {
   }
 }
 
-function DateTimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DateTimeSelect({ value, onChange, disabled = false }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
   const date = value ? value.slice(0, 10) : '';
   const hour = value ? value.slice(11, 13) : '09';
   const minute = value ? value.slice(14, 16) : '00';
@@ -82,12 +82,14 @@ function DateTimeSelect({ value, onChange }: { value: string; onChange: (v: stri
         type="date"
         value={date}
         onChange={e => update(e.target.value, hour, minute)}
-        className="flex-1 min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+        disabled={disabled}
+        className="flex-1 min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
       />
       <select
         value={hour}
         onChange={e => update(date, e.target.value, minute)}
-        className="w-14 rounded-xl border border-gray-200 bg-white px-1 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+        disabled={disabled}
+        className="w-14 rounded-xl border border-gray-200 bg-white px-1 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
       >
         {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
           <option key={h} value={h}>{h}</option>
@@ -96,7 +98,8 @@ function DateTimeSelect({ value, onChange }: { value: string; onChange: (v: stri
       <select
         value={minute}
         onChange={e => update(date, hour, e.target.value)}
-        className="w-14 rounded-xl border border-gray-200 bg-white px-1 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+        disabled={disabled}
+        className="w-14 rounded-xl border border-gray-200 bg-white px-1 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
       >
         {['00', '15', '30', '45'].map(m => (
           <option key={m} value={m}>{m}</option>
@@ -111,6 +114,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
   const { user } = useAuth();
   const [staffs, setStaffs] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(isEdit);
+  const [scheduleStatus, setScheduleStatus] = useState<string>('draft');
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -164,6 +168,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             setValue(key, schedule[key]);
           }
         }
+        setScheduleStatus(schedule.status);
         setLoading(false);
       });
     }
@@ -211,12 +216,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
     }
   };
 
-  function CheckboxField({ label, name }: { label: string; name: keyof ScheduleFormData }) {
+  function CheckboxField({ label, name, disabled = false }: { label: string; name: keyof ScheduleFormData; disabled?: boolean }) {
     const isChecked = watch(name);
     return (
-      <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:bg-gray-100">
-        <input type="checkbox" {...register(name)} className="hidden" />
-        <span className={`relative flex h-5 w-9 items-center rounded-full transition-colors ${isChecked ? 'bg-gray-900' : 'bg-gray-300'}`}>
+      <label className={`flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'}`}>
+        <input type="checkbox" {...register(name)} disabled={disabled} className="hidden" />
+        <span className={`relative flex h-5 w-9 items-center rounded-full transition-colors ${isChecked ? 'bg-gray-900' : 'bg-gray-300'} ${disabled ? 'bg-gray-400' : ''}`}>
           <span className={`absolute h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isChecked ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
         </span>
         <span className="text-sm font-medium text-gray-700">{label}</span>
@@ -226,12 +231,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
 
   const field = (label: string, name: keyof ScheduleFormData, type = 'text') => {
     if (type === 'checkbox') {
-      return <CheckboxField label={label} name={name} />;
+      return <CheckboxField label={label} name={name} disabled={scheduleStatus !== 'draft'} />;
     }
     return (
       <div>
         <label className={labelClass}>{label}</label>
-        <input type={type} {...register(name)} className={inputClass} />
+        <input type={type} {...register(name)} disabled={scheduleStatus !== 'draft'} className={inputClass} />
         {errors[name] && <p className="mt-1 text-xs text-red-400">{errors[name]?.message as string}</p>}
       </div>
     );
@@ -245,7 +250,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             {isEdit ? 'スケジュール編集' : '新規スケジュール'}
           </h2>
           <div className="flex gap-2">
-            {isEdit && onDeleted && (
+            {isEdit && onDeleted && scheduleStatus === 'draft' && (
               <button
                 type="button"
                 onClick={async () => {
@@ -301,6 +306,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 styles={selectStyles}
                 noOptionsMessage={() => '該当なし'}
                 loadingMessage={() => '検索中...'}
+                isDisabled={scheduleStatus !== 'draft'}
               />
               {errors.customerId && <p className="mt-1 text-xs text-red-400">{errors.customerId.message}</p>}
               <input type="hidden" {...register('customerName')} />
@@ -310,13 +316,15 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <label className={labelClass}>商品</label>
-                <button
-                  type="button"
-                  onClick={() => append({ productId: '', productName: '', maker: '', categoryId: '', unitPrice: 0, quantity: 1 })}
-                  className="rounded-xl border border-gray-200 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
-                >
-                  ＋ 追加
-                </button>
+                {scheduleStatus === 'draft' && (
+                  <button
+                    type="button"
+                    onClick={() => append({ productId: '', productName: '', maker: '', categoryId: '', unitPrice: 0, quantity: 1 })}
+                    className="rounded-xl border border-gray-200 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-700 transition"
+                  >
+                    ＋ 追加
+                  </button>
+                )}
               </div>
               {errors.items && <p className="mb-2 text-xs text-red-400">{errors.items.message as string}</p>}
               <div className="space-y-2">
@@ -344,6 +352,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           noOptionsMessage={() => '該当なし'}
                           loadingMessage={() => '検索中...'}
                           className="flex-1"
+                          isDisabled={scheduleStatus !== 'draft'}
                         />
                         <input type="hidden" {...register(`items.${index}.productName`)} />
                         <input type="hidden" {...register(`items.${index}.maker`)} />
@@ -352,24 +361,28 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           <input
                             type="number"
                             {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                            className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            disabled={scheduleStatus !== 'draft'}
+                            className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
                             min={0}
                           />
                           <span className="text-gray-400 text-xs">円</span>
                           <input
                             type="number"
                             {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                            className="w-16 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                            disabled={scheduleStatus !== 'draft'}
+                            className="w-16 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
                             min={1}
                           />
                           <span className="text-gray-700 font-medium w-24 text-right">{(unitPrice * qty).toLocaleString()}円</span>
-                          <button
-                            type="button"
-                            onClick={() => remove(index)}
-                            className="rounded-xl border border-red-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50 transition"
-                          >
-                            削除
-                          </button>
+                          {scheduleStatus === 'draft' && (
+                            <button
+                              type="button"
+                              onClick={() => remove(index)}
+                              className="rounded-xl border border-red-200 px-2.5 py-1.5 text-xs text-red-500 hover:bg-red-50 transition"
+                            >
+                              削除
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -383,7 +396,8 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               <textarea
                 {...register('description')}
                 rows={2}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                disabled={scheduleStatus !== 'draft'}
+                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>
 
@@ -404,6 +418,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 placeholder="選択してください"
                 styles={selectStyles}
                 isSearchable
+                isDisabled={scheduleStatus !== 'draft'}
               />
               {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
               <input type="hidden" {...register('staffName')} />
@@ -414,12 +429,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>開始日時</label>
-                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} />
+                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} disabled={scheduleStatus !== 'draft'} />
                 {errors.startAt && <p className="mt-1 text-xs text-red-400">{errors.startAt.message}</p>}
               </div>
               <div>
                 <label className={labelClass}>終了日時</label>
-                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} />
+                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} disabled={scheduleStatus !== 'draft'} />
                 {errors.endAt && <p className="mt-1 text-xs text-red-400">{errors.endAt.message}</p>}
               </div>
             </div>
@@ -430,13 +445,15 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-all"
-              >
-                {isSubmitting ? '保存中...' : '保存'}
-              </button>
+              {scheduleStatus === 'draft' && (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-all"
+                >
+                  {isSubmitting ? '保存中...' : '保存'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}

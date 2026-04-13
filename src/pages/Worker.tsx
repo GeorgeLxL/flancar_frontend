@@ -1,6 +1,4 @@
 ﻿import { useState } from 'react';
-import toast from 'react-hot-toast';
-import { getSchedule } from '../api/client';
 import Calendar, { type CalendarEvent } from '../components/Calendar';
 import ScheduleFormModal from '../components/ScheduleFormModal';
 import ScheduleSearch from '../components/ScheduleSearch';
@@ -20,19 +18,11 @@ export default function Worker() {
   };
 
   const handleEventClick = (event: CalendarEvent) => {
-    if (event.status === 'draft') setModal({ type: 'edit', id: event.id });
+    setModal({ type: 'edit', id: event.id });
   };
 
   const handleSearchSelect = (id: number) => {
-    getSchedule(id)
-      .then((schedule: { id: number; status: string }) => {
-        if (schedule.status !== 'draft') {
-          toast.error('作成中のスケジュールだけ編集できます。');
-          return;
-        }
-        setModal({ type: 'edit', id: schedule.id });
-      })
-      .catch(() => toast.error('スケジュールの取得に失敗しました。'));
+    setModal({ type: 'edit', id });
   };
 
   const closeModal = () => setModal(null);
