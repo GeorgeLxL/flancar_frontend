@@ -288,6 +288,7 @@ type ScheduleItem = {
 };
 
 export interface Schedule {
+  id: number;
   pdfNumber: string;
   title: string;
   carType: string;
@@ -300,6 +301,7 @@ export interface Schedule {
   staffName: string;
   customer: string;
   requester: string;
+  showComiPack?: boolean;
   items: ScheduleItem[];
 }
 
@@ -328,7 +330,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
           <Text style={styles.title}>{PDF_TYPES[type]}</Text>
           <View style={styles.issueBox}>
             <Text>{formatDate(schedule.startAt, 'yyyy 年　M 月　d 日')}</Text>
-            <Text>登録番号:T8040001012842</Text>
+            <Text>登録番号:T{schedule.id.toString().padStart(7, '0')}</Text>
           </View>
         </View>
 
@@ -403,7 +405,7 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
               <Text style={styles.headerText}>金 額 (税別)</Text>
             </View>
           </View>
-          {Array.from({ length: 2 }).map((_, index) => {
+          {schedule.showComiPack && Array.from({ length: 2 }).map((_, index) => {
             const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
             return (
               <View style={rowStyle}>

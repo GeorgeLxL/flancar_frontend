@@ -21,6 +21,7 @@ export const scheduleSchema = z.object({
   staffName: z.string(),
   customer: z.string(),
   requester: z.string(),
+  showComiPack: z.boolean().optional(),
   items: z.array(scheduleItemSchema),
 });
 

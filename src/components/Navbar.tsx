@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { logout } from '../api/client';
 import axios from 'axios';
@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 const api = axios.create({ baseURL: import.meta.env.VITE_BACKEND_ENDPOINT, withCredentials: true });
 
 export default function Navbar() {
-  const location = useLocation();
   const { user, refetch } = useAuth();
   const [syncing, setSyncing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -62,8 +61,6 @@ export default function Navbar() {
   };
 
   const roleLabel = user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : '';
-  const switchTo = location.pathname.includes('/worker') ? '/clerk' : '/worker';
-  const switchLabel = location.pathname.includes('/worker') ? '事務員へ' : '作業者へ';
 
   return (
     <nav className="relative z-40 border-b border-gray-100 bg-white">
@@ -81,9 +78,6 @@ export default function Navbar() {
               </div>
               {user.roleId === '1' && (
                 <>
-                  <Link to={switchTo} className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-600 transition-colors hover:bg-blue-100">
-                    {switchLabel}
-                  </Link>
                   <Link to="/staff_colors" className="shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 transition-colors hover:bg-emerald-100">
                     色選択
                   </Link>
@@ -121,9 +115,6 @@ export default function Navbar() {
                   </div>
                   {user.roleId === '1' && (
                     <>
-                      <Link to={switchTo} onClick={() => setMenuOpen(false)} className="border-b border-gray-100 px-4 py-3 text-sm text-blue-600 transition-colors hover:bg-gray-50">
-                        {switchLabel}
-                      </Link>
                       <Link to="/staff_colors" onClick={() => setMenuOpen(false)} className="border-b border-gray-100 px-4 py-3 text-sm text-emerald-700 transition-colors hover:bg-gray-50">
                         Staff Colors
                       </Link>

@@ -18,6 +18,8 @@ import {
 } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import { getSchedulesByRange, getStaffColors } from '../api/client';
+import { useAuth } from './AuthContext';
+import { useLocation, Link } from 'react-router-dom';
 
 export interface CalendarEvent {
   id: number;
@@ -437,11 +439,16 @@ function MonthView({
 
 // ── Main Calendar ──────────────────────────────────────────────────────────────
 export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: CalendarProps) {
+  const location = useLocation();
   const [view, setView] = useState<CalendarView>(getDefaultView);
+  const { user } = useAuth();
   const [anchor, setAnchor] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [staffColors, setStaffColors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const switchTo = location.pathname.includes('/worker') ? '/clerk' : '/worker';
+  const switchLabel = location.pathname.includes('/worker') ? '事務員へ' : '作業者へ';
 
   useEffect(() => {
     getStaffColors().then(setStaffColors).catch(() => {});
@@ -509,6 +516,12 @@ export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: Ca
           ))}
         </div>
       </div>
+
+      {user && user.roleId === '1' && (
+        <Link to={switchTo} className="w-25 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-600 transition-colors hover:bg-blue-100">
+          {switchLabel}
+        </Link>
+      )}
 
       <div className="flex gap-4 flex-wrap text-xs text-gray-400">
         {(Object.keys(STATUS_LABEL) as CalendarEvent['status'][]).map(s => (

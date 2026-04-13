@@ -211,13 +211,31 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
     }
   };
 
-  const field = (label: string, name: keyof ScheduleFormData, type = 'text') => (
-    <div>
-      <label className={labelClass}>{label}</label>
-      <input type={type} {...register(name)} className={inputClass} />
-      {errors[name] && <p className="mt-1 text-xs text-red-400">{errors[name]?.message as string}</p>}
-    </div>
-  );
+  function CheckboxField({ label, name }: { label: string; name: keyof ScheduleFormData }) {
+    const isChecked = watch(name);
+    return (
+      <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:bg-gray-100">
+        <input type="checkbox" {...register(name)} className="hidden" />
+        <span className={`relative flex h-5 w-9 items-center rounded-full transition-colors ${isChecked ? 'bg-gray-900' : 'bg-gray-300'}`}>
+          <span className={`absolute h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${isChecked ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+        </span>
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+      </label>
+    );
+  }
+
+  const field = (label: string, name: keyof ScheduleFormData, type = 'text') => {
+    if (type === 'checkbox') {
+      return <CheckboxField label={label} name={name} />;
+    }
+    return (
+      <div>
+        <label className={labelClass}>{label}</label>
+        <input type={type} {...register(name)} className={inputClass} />
+        {errors[name] && <p className="mt-1 text-xs text-red-400">{errors[name]?.message as string}</p>}
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -369,19 +387,6 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>開始日時</label>
-                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} />
-                {errors.startAt && <p className="mt-1 text-xs text-red-400">{errors.startAt.message}</p>}
-              </div>
-              <div>
-                <label className={labelClass}>終了日時</label>
-                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} />
-                {errors.endAt && <p className="mt-1 text-xs text-red-400">{errors.endAt.message}</p>}
-              </div>
-            </div>
-
             {/* Staff */}
             <div>
               <label className={labelClass}>担当者</label>
@@ -402,6 +407,21 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               />
               {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
               <input type="hidden" {...register('staffName')} />
+            </div>
+
+            {field('工賃コミコミパック表示', 'showComiPack', 'checkbox')}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>開始日時</label>
+                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} />
+                {errors.startAt && <p className="mt-1 text-xs text-red-400">{errors.startAt.message}</p>}
+              </div>
+              <div>
+                <label className={labelClass}>終了日時</label>
+                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} />
+                {errors.endAt && <p className="mt-1 text-xs text-red-400">{errors.endAt.message}</p>}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
