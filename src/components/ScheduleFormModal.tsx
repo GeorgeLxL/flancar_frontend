@@ -231,12 +231,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
 
   const field = (label: string, name: keyof ScheduleFormData, type = 'text') => {
     if (type === 'checkbox') {
-      return <CheckboxField label={label} name={name} disabled={scheduleStatus !== 'draft'} />;
+      return <CheckboxField label={label} name={name} disabled={scheduleStatus === 'finished'} />;
     }
     return (
       <div>
         <label className={labelClass}>{label}</label>
-        <input type={type} {...register(name)} disabled={scheduleStatus !== 'draft'} className={inputClass} />
+        <input type={type} {...register(name)} disabled={scheduleStatus === 'finished'} className={inputClass} />
         {errors[name] && <p className="mt-1 text-xs text-red-400">{errors[name]?.message as string}</p>}
       </div>
     );
@@ -250,7 +250,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             {isEdit ? 'スケジュール編集' : '新規スケジュール'}
           </h2>
           <div className="flex gap-2">
-            {isEdit && onDeleted && scheduleStatus === 'draft' && (
+            {isEdit && onDeleted && scheduleStatus !== 'finished' && (
               <button
                 type="button"
                 onClick={async () => {
@@ -306,7 +306,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 styles={selectStyles}
                 noOptionsMessage={() => '該当なし'}
                 loadingMessage={() => '検索中...'}
-                isDisabled={scheduleStatus !== 'draft'}
+                isDisabled={scheduleStatus === 'finished'}
               />
               {errors.customerId && <p className="mt-1 text-xs text-red-400">{errors.customerId.message}</p>}
               <input type="hidden" {...register('customerName')} />
@@ -316,7 +316,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <label className={labelClass}>商品</label>
-                {scheduleStatus === 'draft' && (
+                {scheduleStatus !== 'finished' && (
                   <button
                     type="button"
                     onClick={() => append({ productId: '', productName: '', maker: '', categoryId: '', unitPrice: 0, quantity: 1 })}
@@ -352,7 +352,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           noOptionsMessage={() => '該当なし'}
                           loadingMessage={() => '検索中...'}
                           className="flex-1"
-                          isDisabled={scheduleStatus !== 'draft'}
+                          isDisabled={scheduleStatus === 'finished'}
                         />
                         <input type="hidden" {...register(`items.${index}.productName`)} />
                         <input type="hidden" {...register(`items.${index}.maker`)} />
@@ -361,7 +361,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           <input
                             type="number"
                             {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                            disabled={scheduleStatus !== 'draft'}
+                            disabled={scheduleStatus === 'finished'}
                             className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
                             min={0}
                           />
@@ -369,12 +369,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                           <input
                             type="number"
                             {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                            disabled={scheduleStatus !== 'draft'}
+                            disabled={scheduleStatus === 'finished'}
                             className="w-16 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
                             min={1}
                           />
                           <span className="text-gray-700 font-medium w-24 text-right">{(unitPrice * qty).toLocaleString()}円</span>
-                          {scheduleStatus === 'draft' && (
+                          {scheduleStatus !== 'finished' && (
                             <button
                               type="button"
                               onClick={() => remove(index)}
@@ -396,7 +396,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
               <textarea
                 {...register('description')}
                 rows={2}
-                disabled={scheduleStatus !== 'draft'}
+                disabled={scheduleStatus === 'finished'}
                 className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>
@@ -418,7 +418,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
                 placeholder="選択してください"
                 styles={selectStyles}
                 isSearchable
-                isDisabled={scheduleStatus !== 'draft'}
+                isDisabled={scheduleStatus === 'finished'}
               />
               {errors.staffId && <p className="mt-1 text-xs text-red-400">{errors.staffId.message}</p>}
               <input type="hidden" {...register('staffName')} />
@@ -429,12 +429,12 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>開始日時</label>
-                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} disabled={scheduleStatus !== 'draft'} />
+                <DateTimeSelect value={watch('startAt')} onChange={v => setValue('startAt', v)} disabled={scheduleStatus === 'finished'} />
                 {errors.startAt && <p className="mt-1 text-xs text-red-400">{errors.startAt.message}</p>}
               </div>
               <div>
                 <label className={labelClass}>終了日時</label>
-                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} disabled={scheduleStatus !== 'draft'} />
+                <DateTimeSelect value={watch('endAt')} onChange={v => setValue('endAt', v)} disabled={scheduleStatus === 'finished'} />
                 {errors.endAt && <p className="mt-1 text-xs text-red-400">{errors.endAt.message}</p>}
               </div>
             </div>
@@ -445,7 +445,7 @@ export default function ScheduleFormModal({ scheduleId, defaultDate, defaultEndD
             </div>
 
             <div className="flex gap-3 pt-2">
-              {scheduleStatus === 'draft' && (
+              {scheduleStatus !== 'finished' && (
                 <button
                   type="submit"
                   disabled={isSubmitting}

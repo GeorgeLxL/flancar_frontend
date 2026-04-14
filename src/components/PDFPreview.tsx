@@ -303,6 +303,7 @@ export interface Schedule {
   requester: string;
   showComiPack?: boolean;
   items: ScheduleItem[];
+  createdAt: string;
 }
 
 function formatDate(value: string, pattern: string) {
@@ -313,7 +314,7 @@ function yen(value: number) {
   return value.toLocaleString();
 }
 
-function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) {
+function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type: PdfType; quotedDate: string }) {
   const subtotal = schedule.items.reduce((sum, item) => sum + (item.unitPrice ?? 0) * item.quantity, 0);
   const tax = Math.floor(subtotal * 0.1);
   const total = subtotal + tax;
@@ -326,10 +327,10 @@ function SchedulePDF({ schedule, type }: { schedule: Schedule; type: PdfType }) 
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.topRow}>
-          <Text style={styles.slipNo}>伝票番号 {schedule.pdfNumber}</Text>
+          <Text style={styles.slipNo}>伝票番号 {schedule.pdfNumber.slice(-7)}</Text>
           <Text style={styles.title}>{PDF_TYPES[type]}</Text>
           <View style={styles.issueBox}>
-            <Text>{formatDate(schedule.startAt, 'yyyy 年　M 月　d 日')}</Text>
+            <Text>{type === "estimate" ? formatDate(quotedDate || schedule.createdAt, 'yyyy 年  M 月  d 日') : `${new Date().getFullYear()} 年     月     日`}</Text>
             <Text>登録番号:T{schedule.id.toString().padStart(7, '0')}</Text>
           </View>
         </View>
@@ -485,7 +486,8 @@ export default function PDFPreview({
   const types: PdfType[] = ['estimate', 'order', 'delivery', 'invoice'];
   const [selected, setSelected] = useState<PdfType>('estimate');
   const [sending, setSending] = useState(false);
-  const document = useMemo(() => <SchedulePDF schedule={schedule} type={selected} />, [schedule, selected]);
+  const [quotedDate, setQuotedDate] = useState('');
+  const document = useMemo(() => <SchedulePDF schedule={schedule} type={selected} quotedDate={quotedDate} />, [schedule, selected, quotedDate]);
 
   const handleSendFax = async () => {
     if (!onSendPdf) return;
@@ -512,17 +514,25 @@ export default function PDFPreview({
           </button>
         )}
       </div>
-      <div className="mb-4 flex gap-2">
-        {types.map(type => (
-          <button
-            type="button"
-            key={type}
-            onClick={() => setSelected(type)}
-            className={`rounded-xl border px-4 py-2 text-sm ${selected === type ? 'bg-red-600 text-white' : 'hover:bg-gray-50'}`}
-          >
-            {PDF_TYPES[type]}
-          </button>
-        ))}
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 items-center gap-4">
+        <div className='flex gap-2'>
+          {types.map(type => (
+            <button
+              type="button"
+              key={type}
+              onClick={() => setSelected(type)}
+              className={`rounded-xl border px-4 py-2 text-sm ${selected === type ? 'bg-red-600 text-white' : 'hover:bg-gray-50'}`}
+            >
+              {PDF_TYPES[type]}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto ml-sm-0 flex items-center gap-2">
+          <label htmlFor="quotedDate" className="text-sm font-medium text-gray-700">
+            見積日変更
+          </label>
+          <input id="quotedDate" className="min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500" type="date" value={quotedDate} onChange={e => setQuotedDate(e.target.value)} />
+        </div>
       </div>
       <BlobProvider document={document}>
         {({ url, loading, error }) => {
