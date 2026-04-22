@@ -378,7 +378,7 @@ function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type:
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>備考:</Text>
-                <Text style={styles.detailValue}>{schedule.description ?? ''}</Text>
+                <Text style={styles.detailValue}></Text>
               </View>
             </View>
           </View>
