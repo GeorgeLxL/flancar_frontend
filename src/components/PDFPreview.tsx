@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   customerValue: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 57,
     textAlign: 'center',
     textAlignVertical: 'center',
     paddingTop: 12,
@@ -203,9 +203,6 @@ const styles = StyleSheet.create({
     borderBottom: '1 solid #b7c1ce',
     paddingHorizontal: 4,
   },
-  lastCell: {
-    borderRight: '0 solid transparent',
-  },
   headerText: {
     color: '#fff',
     fontSize: 8,
@@ -225,7 +222,7 @@ const styles = StyleSheet.create({
     width: 86,
   },
   colAmount: {
-    width: 96,
+    width: 118,
   },
   makerText: {
     fontSize: 8,
@@ -242,8 +239,8 @@ const styles = StyleSheet.create({
   },
   totalSection: {
     marginTop: 0,
-    marginLeft: 352,
-    width: 182,
+    marginLeft: 351,
+    width: 204,
     borderLeft: '1 solid #5f6b7a',
     borderRight: '1 solid #5f6b7a',
     borderBottom: '1 solid #5f6b7a',
@@ -263,7 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   totalValue: {
-    width: 96,
+    width: 118,
     borderBottom: '1 solid #b7c1ce',
     textAlign: 'right',
     paddingTop: 3,
@@ -331,7 +328,7 @@ function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type:
           <Text style={styles.title}>{PDF_TYPES[type]}</Text>
           <View style={styles.issueBox}>
             <Text>{type === "estimate" ? formatDate(quotedDate || schedule.createdAt, 'yyyy 年  M 月  d 日') : `${new Date().getFullYear()} 年     月     日`}</Text>
-            <Text>登録番号:T{schedule.id.toString().padStart(7, '0')}</Text>
+            <Text>登録番号:T8040001012842</Text>
           </View>
         </View>
 
@@ -360,8 +357,26 @@ function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type:
               </View>
             </View>
 
-            <Text style={styles.noteText}>お世話になっております。</Text>
-            <Text style={styles.noteText}>下記商品、納品いたします。ご用命、誠にありがとうございます。</Text>
+            {
+              type === 'estimate' ?
+              <>
+                <Text style={styles.noteText}>お世話になっております。</Text>
+                <Text style={styles.noteText}>以下お見積もりとなりますので金額等ご確認ください。</Text>
+                <Text style={styles.noteText}>ぜひご用命いただけますと幸いです。何卒、よろしくお願い申し上げます。</Text>
+              </>
+              :
+              type === 'delivery' ?
+              <>
+                <Text style={styles.noteText}>お世話になっております。</Text>
+                <Text style={styles.noteText}>下記商品、納品いたします。ご用命、誠にありがとうございます。</Text>
+              </>
+              :
+              <>
+                <Text style={styles.noteText}>いつもお世話になっております。</Text>
+                <Text style={styles.noteText}>上記金額ご請求申し上げます。</Text>
+                <Text style={styles.noteText}>誠に恐れ入りますが、お振込手数料はご負担いただきますよう、お願いいたします。</Text>
+              </>
+            }
 
             <View style={styles.detailTable}>
               <View style={styles.detailRow}>
@@ -402,7 +417,7 @@ function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type:
             <View style={[styles.headerCell, styles.colUnit]}>
               <Text style={styles.headerText}>単 価 (税別)</Text>
             </View>
-            <View style={[styles.headerCell, styles.colAmount, styles.lastCell]}>
+            <View style={[styles.headerCell, styles.colAmount]}>
               <Text style={styles.headerText}>金 額 (税別)</Text>
             </View>
           </View>
@@ -424,7 +439,7 @@ function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type:
                 <View style={[styles.bodyCell, styles.colUnit]}>
                   <Text style={styles.numberText}></Text>
                 </View>
-                <View style={[styles.bodyCell, styles.colAmount, styles.lastCell]}>
+                <View style={[styles.bodyCell, styles.colAmount]}>
                   <Text style={styles.numberText}></Text>
                 </View>
               </View>
@@ -447,7 +462,7 @@ function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type:
                 <View style={[styles.bodyCell, styles.colUnit]}>
                   <Text style={styles.numberText}>{item.productName ? yen(item.unitPrice ?? 0) : ''}</Text>
                 </View>
-                <View style={[styles.bodyCell, styles.colAmount, styles.lastCell]}>
+                <View style={[styles.bodyCell, styles.colAmount]}>
                   <Text style={styles.numberText}>{item.productName ? yen(amount) : ''}</Text>
                 </View>
               </View>
