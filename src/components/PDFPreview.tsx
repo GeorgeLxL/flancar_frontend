@@ -1,6 +1,5 @@
-﻿import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { useMemo } from 'react';
 import { BlobProvider, Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import markImage from '../assets/mark.jpg';
 
@@ -15,6 +14,8 @@ const PDF_TYPES = {
   delivery: '納 品 書',
   invoice: '御 請 求 書',
 } as const;
+
+const ALL_PDF_TYPES = ['estimate', 'order', 'delivery', 'invoice'] as const;
 
 const styles = StyleSheet.create({
   page: {
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
 
 type PdfType = keyof typeof PDF_TYPES;
 type ScheduleStatus = 'draft' | 'pending' | 'sent' | 'finished';
+type PdfPageCount = 1 | 4;
 
 type ScheduleItem = {
   productName: string;
@@ -311,180 +313,199 @@ function yen(value: number) {
   return value.toLocaleString();
 }
 
-function SchedulePDF({ schedule, type, quotedDate }: { schedule: Schedule; type: PdfType; quotedDate: string }) {
+function SchedulePDFPage({ schedule, type, quotedDate }: { schedule: Schedule; type: PdfType; quotedDate: string }) {
   const subtotal = schedule.items.reduce((sum, item) => sum + (item.unitPrice ?? 0) * item.quantity, 0);
   const tax = Math.floor(subtotal * 0.1);
   const total = subtotal + tax;
   const paddedItems = [...schedule.items];
+
   while (paddedItems.length < 18) {
     paddedItems.push({ productName: '', quantity: 0, unitPrice: 0 });
   }
 
   return (
+    <Page size="A4" style={styles.page}>
+      <View style={styles.topRow}>
+        <Text style={styles.slipNo}>伝票番号 {schedule.pdfNumber.slice(-7)}</Text>
+        <Text style={styles.title}>{PDF_TYPES[type]}</Text>
+        <View style={styles.issueBox}>
+          <Text>{type === 'estimate' ? formatDate(quotedDate || schedule.createdAt, 'yyyy 年  M 月  d 日') : `${new Date().getFullYear()} 年     月     日`}</Text>
+          <Text>登録番号:T8040001012842</Text>
+        </View>
+      </View>
+
+      <View style={styles.upperArea}>
+        <View style={styles.leftInfo}>
+          <View style={styles.recipientLine}>
+            <Text style={styles.recipientText}>{schedule.customerName}</Text>
+            <Text style={styles.shopText}>御中</Text>
+          </View>
+
+          <View style={styles.amountArea}>
+            <View style={styles.amountBox}>
+              <Text style={styles.amountHeader}>御請求金額</Text>
+              <Text style={styles.amountValue}>￥{yen(total)}</Text>
+            </View>
+
+            <View style={styles.customerBox}>
+              <View style={styles.customerHeaderRow}>
+                <Text style={styles.customerCellHeader}>担当者</Text>
+                <Text style={[styles.customerCellHeader, styles.customerCellHeaderLast]}>責任者</Text>
+              </View>
+              <View style={styles.customerValueRow}>
+                <Text style={styles.customerValue}>{schedule.staffName}</Text>
+                <Text style={[styles.customerValue, styles.customerValueLast]}>河野</Text>
+              </View>
+            </View>
+          </View>
+
+          {type === 'estimate' ? (
+            <>
+              <Text style={styles.noteText}>お世話になっております。</Text>
+              <Text style={styles.noteText}>以下お見積もりとなりますので金額等ご確認ください。</Text>
+              <Text style={styles.noteText}>ぜひご用命いただけますと幸いです。何卒、よろしくお願い申し上げます。</Text>
+            </>
+          ) : type === 'delivery' ? (
+            <>
+              <Text style={styles.noteText}>お世話になっております。</Text>
+              <Text style={styles.noteText}>下記商品、納品いたします。ご用命、誠にありがとうございます。</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.noteText}>いつもお世話になっております。</Text>
+              <Text style={styles.noteText}>上記金額ご請求申し上げます。</Text>
+              <Text style={styles.noteText}>誠に恐れ入りますが、お振込手数料はご負担いただきますよう、お願いいたします。</Text>
+            </>
+          )}
+
+          <View style={styles.detailTable}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>車種:</Text>
+              <Text style={styles.detailValue}>{schedule.carType}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>お客様名:</Text>
+              <Text style={styles.detailValue}>{schedule.customer}　様</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>ご依頼者:</Text>
+              <Text style={styles.detailValue}>{schedule.requester}　様</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>備考:</Text>
+              <Text style={styles.detailValue}></Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.logoArea}>
+          <Image src={markImage} style={styles.logo} />
+        </View>
+      </View>
+
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <View style={[styles.headerCell, styles.colMaker]}>
+            <Text style={styles.headerText}>メーカー</Text>
+          </View>
+          <View style={[styles.headerCell, styles.colProduct]}>
+            <Text style={styles.headerText}>商 品 名</Text>
+          </View>
+          <View style={[styles.headerCell, styles.colQty]}>
+            <Text style={styles.headerText}>数 量</Text>
+          </View>
+          <View style={[styles.headerCell, styles.colUnit]}>
+            <Text style={styles.headerText}>単 価 (税別)</Text>
+          </View>
+          <View style={[styles.headerCell, styles.colAmount]}>
+            <Text style={styles.headerText}>金 額 (税別)</Text>
+          </View>
+        </View>
+        {schedule.showComiPack && Array.from({ length: 2 }).map((_, index) => {
+          const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
+
+          return (
+            <View key={`comipack-${index}`} style={rowStyle}>
+              <View style={[styles.bodyCell, styles.colMaker]}>
+                <Text style={styles.makerText}></Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colProduct]}>
+                <Text style={styles.productText}>
+                  {index === 0 ? '（工賃コミコミパック）' : ''}
+                </Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colQty]}>
+                <Text style={styles.numberText}></Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colUnit]}>
+                <Text style={styles.numberText}></Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colAmount]}>
+                <Text style={styles.numberText}></Text>
+              </View>
+            </View>
+          );
+        })}
+        {paddedItems.map((item, index) => {
+          const amount = (item.unitPrice ?? 0) * item.quantity;
+          const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
+
+          return (
+            <View key={`${item.productName}-${index}`} style={rowStyle}>
+              <View style={[styles.bodyCell, styles.colMaker]}>
+                <Text style={styles.makerText}>{item.productName ? (item.maker ?? '') : ''}</Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colProduct]}>
+                <Text style={styles.productText}>{item.productName ? `${item.categoryName ? item.categoryName + ' ' : ''}${item.productName}` : ''}</Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colQty]}>
+                <Text style={styles.numberText}>{item.quantity ? item.quantity : ''}</Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colUnit]}>
+                <Text style={styles.numberText}>{item.productName ? yen(item.unitPrice ?? 0) : ''}</Text>
+              </View>
+              <View style={[styles.bodyCell, styles.colAmount]}>
+                <Text style={styles.numberText}>{item.productName ? yen(amount) : ''}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
+      <View style={styles.totalSection}>
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>小計(税抜)</Text>
+          <Text style={styles.totalValue}>{yen(subtotal)}</Text>
+        </View>
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>消費税(10%)</Text>
+          <Text style={styles.totalValue}>{yen(tax)}</Text>
+        </View>
+        <View style={[styles.totalRow, styles.totalRowLast]}>
+          <Text style={styles.totalLabel}>合計</Text>
+          <Text style={styles.totalValue}>{yen(total)}</Text>
+        </View>
+      </View>
+    </Page>
+  );
+}
+
+function SchedulePDF({
+  schedule,
+  pageCount,
+  quotedDate,
+}: {
+  schedule: Schedule;
+  pageCount: PdfPageCount;
+  quotedDate: string;
+}) {
+  const types: readonly PdfType[] = pageCount === 1 ? ['estimate'] : ALL_PDF_TYPES;
+
+  return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.topRow}>
-          <Text style={styles.slipNo}>伝票番号 {schedule.pdfNumber.slice(-7)}</Text>
-          <Text style={styles.title}>{PDF_TYPES[type]}</Text>
-          <View style={styles.issueBox}>
-            <Text>{type === "estimate" ? formatDate(quotedDate || schedule.createdAt, 'yyyy 年  M 月  d 日') : `${new Date().getFullYear()} 年     月     日`}</Text>
-            <Text>登録番号:T8040001012842</Text>
-          </View>
-        </View>
-
-        <View style={styles.upperArea}>
-          <View style={styles.leftInfo}>
-            <View style={styles.recipientLine}>
-              <Text style={styles.recipientText}>{schedule.customerName}</Text>
-              <Text style={styles.shopText}>御中</Text>
-            </View>
-
-            <View style={styles.amountArea}>
-              <View style={styles.amountBox}>
-                <Text style={styles.amountHeader}>御請求金額</Text>
-                <Text style={styles.amountValue}>￥{yen(total)}</Text>
-              </View>
-
-              <View style={styles.customerBox}>
-                <View style={styles.customerHeaderRow}>
-                  <Text style={styles.customerCellHeader}>担当者</Text>
-                  <Text style={[styles.customerCellHeader, styles.customerCellHeaderLast]}>責任者</Text>
-                </View>
-                <View style={styles.customerValueRow}>
-                  <Text style={styles.customerValue}>{schedule.staffName}</Text>
-                  <Text style={[styles.customerValue, styles.customerValueLast]}>河野</Text>
-                </View>
-              </View>
-            </View>
-
-            {
-              type === 'estimate' ?
-              <>
-                <Text style={styles.noteText}>お世話になっております。</Text>
-                <Text style={styles.noteText}>以下お見積もりとなりますので金額等ご確認ください。</Text>
-                <Text style={styles.noteText}>ぜひご用命いただけますと幸いです。何卒、よろしくお願い申し上げます。</Text>
-              </>
-              :
-              type === 'delivery' ?
-              <>
-                <Text style={styles.noteText}>お世話になっております。</Text>
-                <Text style={styles.noteText}>下記商品、納品いたします。ご用命、誠にありがとうございます。</Text>
-              </>
-              :
-              <>
-                <Text style={styles.noteText}>いつもお世話になっております。</Text>
-                <Text style={styles.noteText}>上記金額ご請求申し上げます。</Text>
-                <Text style={styles.noteText}>誠に恐れ入りますが、お振込手数料はご負担いただきますよう、お願いいたします。</Text>
-              </>
-            }
-
-            <View style={styles.detailTable}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>車種:</Text>
-                <Text style={styles.detailValue}>{schedule.carType}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>お客様名:</Text>
-                <Text style={styles.detailValue}>{schedule.customer}　様</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>ご依頼者:</Text>
-                <Text style={styles.detailValue}>{schedule.requester}　様</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>備考:</Text>
-                <Text style={styles.detailValue}></Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.logoArea}>
-            <Image src={markImage} style={styles.logo} />
-          </View>
-        </View>
-
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <View style={[styles.headerCell, styles.colMaker]}>
-              <Text style={styles.headerText}>メーカー</Text>
-            </View>
-            <View style={[styles.headerCell, styles.colProduct]}>
-              <Text style={styles.headerText}>商 品 名</Text>
-            </View>
-            <View style={[styles.headerCell, styles.colQty]}>
-              <Text style={styles.headerText}>数 量</Text>
-            </View>
-            <View style={[styles.headerCell, styles.colUnit]}>
-              <Text style={styles.headerText}>単 価 (税別)</Text>
-            </View>
-            <View style={[styles.headerCell, styles.colAmount]}>
-              <Text style={styles.headerText}>金 額 (税別)</Text>
-            </View>
-          </View>
-          {schedule.showComiPack && Array.from({ length: 2 }).map((_, index) => {
-            const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
-            return (
-              <View style={rowStyle}>
-                <View style={[styles.bodyCell, styles.colMaker]}>
-                  <Text style={styles.makerText}></Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colProduct]}>
-                  <Text style={styles.productText}>
-                    {index === 0 ? '（工賃コミコミパック）' : ''}
-                  </Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colQty]}>
-                  <Text style={styles.numberText}></Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colUnit]}>
-                  <Text style={styles.numberText}></Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colAmount]}>
-                  <Text style={styles.numberText}></Text>
-                </View>
-              </View>
-            );
-          })}
-          {paddedItems.map((item, index) => {
-            const amount = (item.unitPrice ?? 0) * item.quantity;
-            const rowStyle = index % 2 === 0 ? [styles.row, styles.evenRow] : styles.row;
-            return (
-              <View key={`${item.productName}-${index}`} style={rowStyle}>
-                <View style={[styles.bodyCell, styles.colMaker]}>
-                  <Text style={styles.makerText}>{item.productName ? (item.maker ?? '') : ''}</Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colProduct]}>
-                  <Text style={styles.productText}>{item.productName ? `${item.categoryName ? item.categoryName + ' ' : ''}${item.productName}` : ''}</Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colQty]}>
-                  <Text style={styles.numberText}>{item.quantity ? item.quantity : ''}</Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colUnit]}>
-                  <Text style={styles.numberText}>{item.productName ? yen(item.unitPrice ?? 0) : ''}</Text>
-                </View>
-                <View style={[styles.bodyCell, styles.colAmount]}>
-                  <Text style={styles.numberText}>{item.productName ? yen(amount) : ''}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-
-        <View style={styles.totalSection}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>小計(税抜)</Text>
-            <Text style={styles.totalValue}>{yen(subtotal)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>消費税(10%)</Text>
-            <Text style={styles.totalValue}>{yen(tax)}</Text>
-          </View>
-          <View style={[styles.totalRow, styles.totalRowLast]}>
-            <Text style={styles.totalLabel}>合計</Text>
-            <Text style={styles.totalValue}>{yen(total)}</Text>
-          </View>
-        </View>
-      </Page>
+      {types.map(type => (
+        <SchedulePDFPage key={type} schedule={schedule} type={type} quotedDate={quotedDate} />
+      ))}
     </Document>
   );
 }
@@ -498,11 +519,14 @@ export default function PDFPreview({
   status?: ScheduleStatus;
   onSendPdf?: () => Promise<void> | void;
 }) {
-  const types: PdfType[] = ['estimate', 'order', 'delivery', 'invoice'];
-  const [selected, setSelected] = useState<PdfType>('estimate');
+  const [pageCount, setPageCount] = useState<PdfPageCount>(1);
   const [sending, setSending] = useState(false);
   const [quotedDate, setQuotedDate] = useState('');
-  const document = useMemo(() => <SchedulePDF schedule={schedule} type={selected} quotedDate={quotedDate} />, [schedule, selected, quotedDate]);
+  const fileName = `${schedule.staffName}_${schedule.pdfNumber}.pdf`;
+  const document = useMemo(
+    () => <SchedulePDF schedule={schedule} pageCount={pageCount} quotedDate={quotedDate} />,
+    [schedule, pageCount, quotedDate],
+  );
 
   const handleSendFax = async () => {
     if (!onSendPdf) return;
@@ -529,16 +553,16 @@ export default function PDFPreview({
           </button>
         )}
       </div>
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 items-center gap-4">
-        <div className='flex gap-2'>
-          {types.map(type => (
+      <div className="mb-4 grid grid-cols-1 items-center gap-4 sm:grid-cols-2">
+        <div className="flex gap-2">
+          {[1, 4].map(count => (
             <button
               type="button"
-              key={type}
-              onClick={() => setSelected(type)}
-              className={`rounded-xl border px-4 py-2 text-sm ${selected === type ? 'bg-red-600 text-white' : 'hover:bg-gray-50'}`}
+              key={count}
+              onClick={() => setPageCount(count as PdfPageCount)}
+              className={`rounded-xl border px-4 py-2 text-sm ${pageCount === count ? 'bg-red-600 text-white' : 'hover:bg-gray-50'}`}
             >
-              {PDF_TYPES[type]}
+              {count}ページ
             </button>
           ))}
         </div>
@@ -546,7 +570,13 @@ export default function PDFPreview({
           <label htmlFor="quotedDate" className="text-sm font-medium text-gray-700">
             見積日変更
           </label>
-          <input id="quotedDate" className="min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500" type="date" value={quotedDate} onChange={e => setQuotedDate(e.target.value)} />
+          <input
+            id="quotedDate"
+            className="min-w-0 rounded-xl border border-gray-200 bg-white px-2 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:text-gray-500"
+            type="date"
+            value={quotedDate}
+            onChange={e => setQuotedDate(e.target.value)}
+          />
         </div>
       </div>
       <BlobProvider document={document}>
@@ -568,11 +598,20 @@ export default function PDFPreview({
           }
 
           return (
-            <iframe
-              src={`${url}#toolbar=1`}
-              title="PDF preview"
-              className="h-[860px] w-full rounded-xl border border-gray-200"
-            />
+            <>
+              <a
+                href={url}
+                download={fileName}
+                className="mb-3 inline-flex rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                {fileName}
+              </a>
+              <iframe
+                src={`${url}#toolbar=1`}
+                title="PDF preview"
+                className="h-[860px] w-full rounded-xl border border-gray-200"
+              />
+            </>
           );
         }}
       </BlobProvider>
