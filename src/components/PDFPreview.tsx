@@ -522,7 +522,7 @@ export default function PDFPreview({
   const [pageCount, setPageCount] = useState<PdfPageCount>(1);
   const [sending, setSending] = useState(false);
   const [quotedDate, setQuotedDate] = useState('');
-  const fileName = `${schedule.staffName}_${schedule.pdfNumber}.pdf`;
+  const fileName = `${schedule.customerName}_${schedule.pdfNumber}.pdf`;
   const document = useMemo(
     () => <SchedulePDF schedule={schedule} pageCount={pageCount} quotedDate={quotedDate} />,
     [schedule, pageCount, quotedDate],
