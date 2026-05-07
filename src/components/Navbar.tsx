@@ -63,7 +63,7 @@ export default function Navbar() {
 
   const roleLabel = user?.roleId === '3' ? 'worker' : user?.roleId === '2' ? 'clerk' : user?.roleId === '1' ? 'admin' : '';
   const switchTo = location.pathname.includes('/worker') ? '/clerk' : '/worker';
-  const switchLabel = location.pathname.includes('/worker') ? '事務員へ' : '作業者へ';
+  const switchLabel = location.pathname.includes('/worker') ? '店舗' : 'スケジュール';
 
   return (
     <nav className="relative z-40 border-b border-gray-100 bg-white">

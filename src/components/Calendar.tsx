@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { getSchedulesByRange, getStaffColors } from '../api/client';
 import { useAuth } from './AuthContext';
+import { useCalendar } from './CalendarContext';
 import { useLocation, Link } from 'react-router-dom';
 
 export interface CalendarEvent {
@@ -68,10 +69,6 @@ interface CalendarProps {
   refreshKey?: number;
   onRangeSelect?: (start: Date, end: Date) => void;
   onEventClick?: (event: CalendarEvent) => void;
-}
-
-function getDefaultView(): CalendarView {
-  return window.innerWidth < 640 ? 'day' : 'month';
 }
 
 function rangeForView(view: CalendarView, anchor: Date): { from: Date; to: Date } {
@@ -440,15 +437,14 @@ function MonthView({
 // ── Main Calendar ──────────────────────────────────────────────────────────────
 export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: CalendarProps) {
   const location = useLocation();
-  const [view, setView] = useState<CalendarView>(getDefaultView);
+  const { anchor, setAnchor, view, setView } = useCalendar();
   const { user } = useAuth();
-  const [anchor, setAnchor] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [staffColors, setStaffColors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const switchTo = location.pathname.includes('/worker') ? '/clerk' : '/worker';
-  const switchLabel = location.pathname.includes('/worker') ? '事務員へ' : '作業者へ';
+  const switchLabel = location.pathname.includes('/worker') ? '店舗' : 'スケジュール';
 
   useEffect(() => {
     getStaffColors().then(setStaffColors).catch(() => {});
@@ -468,11 +464,9 @@ export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: Ca
   }, [view, anchor, refreshKey]);
 
   const navigate = (dir: 1 | -1) => {
-    setAnchor(a => {
-      if (view === 'day') return dir === 1 ? addDays(a, 1) : subDays(a, 1);
-      if (view === 'week') return dir === 1 ? addWeeks(a, 1) : subWeeks(a, 1);
-      return dir === 1 ? addMonths(a, 1) : subMonths(a, 1);
-    });
+    if (view === 'day') setAnchor(dir === 1 ? addDays(anchor, 1) : subDays(anchor, 1));
+    else if (view === 'week') setAnchor(dir === 1 ? addWeeks(anchor, 1) : subWeeks(anchor, 1));
+    else setAnchor(dir === 1 ? addMonths(anchor, 1) : subMonths(anchor, 1));
   };
 
   const headerLabel = () => {
@@ -518,7 +512,7 @@ export default function Calendar({ refreshKey, onRangeSelect, onEventClick }: Ca
       </div>
 
       {user && user.roleId === '1' && (
-        <Link to={switchTo} className="w-25 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-600 transition-colors hover:bg-blue-100">
+        <Link to={switchTo} className="max-w-32 text-center rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-blue-600 transition-colors hover:bg-blue-100">
           {switchLabel}
         </Link>
       )}
