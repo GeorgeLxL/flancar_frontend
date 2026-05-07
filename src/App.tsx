@@ -2,14 +2,16 @@ import { HashRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { AuthProvider } from './components/AuthContext';
+import { CalendarProvider } from './components/CalendarContext';
 import AppRoutes from './AppRoutes';
 
 export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
-        <AppRoutes />
-        <Toaster
+        <CalendarProvider>
+          <AppRoutes />
+          <Toaster
           position="top-right"
           toastOptions={{
             duration: 3000,
@@ -31,6 +33,7 @@ export default function App() {
             },
           }}
         />
+        </CalendarProvider>
       </AuthProvider>
     </HashRouter>
   );
